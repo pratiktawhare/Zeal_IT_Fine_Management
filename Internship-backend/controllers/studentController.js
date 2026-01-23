@@ -471,6 +471,303 @@ const deleteStudent = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Add a new student (single)
+ * @route   POST /api/students/add
+ * @access  Private
+ */
+const addStudent = asyncHandler(async (req, res) => {
+    const { prn, name, department, academicYear, semester, year, division, rollNo, email, phone } = req.body;
+
+    // Validate required fields
+    if (!prn || !name) {
+        res.status(400);
+        throw new Error('Please provide PRN and Name');
+    }
+
+    // Check if student already exists
+    const existingStudent = await Student.findOne({ prn: prn.toUpperCase() });
+    if (existingStudent) {
+        res.status(400);
+        throw new Error(`Student with PRN ${prn.toUpperCase()} already exists`);
+    }
+
+    // Create new student
+    const student = await Student.create({
+        prn: prn.toUpperCase(),
+        name: name.trim(),
+        department: department?.trim(),
+        academicYear: academicYear?.trim(),
+        semester: semester?.trim(),
+        year: year?.trim(),
+        division: division?.trim(),
+        rollNo: rollNo?.trim(),
+        email: email?.trim()?.toLowerCase(),
+        phone: phone?.trim()
+    });
+
+    res.status(201).json({
+        success: true,
+        message: 'Student added successfully',
+        data: student
+    });
+});
+
+/**
+ * @desc    Update student details
+ * @route   PUT /api/students/:prn
+ * @access  Private
+ */
+const updateStudent = asyncHandler(async (req, res) => {
+    const { prn } = req.params;
+    const { name, department, academicYear, semester, year, division, rollNo, email, phone } = req.body;
+
+    const student = await Student.findOne({ prn: prn.toUpperCase() });
+
+    if (!student) {
+        res.status(404);
+        throw new Error(`Student with PRN ${prn.toUpperCase()} not found`);
+    }
+
+    // Update fields if provided
+    if (name) student.name = name.trim();
+    if (department !== undefined) student.department = department?.trim();
+    if (academicYear !== undefined) student.academicYear = academicYear?.trim();
+    if (semester !== undefined) student.semester = semester?.trim();
+    if (year !== undefined) student.year = year?.trim();
+    if (division !== undefined) student.division = division?.trim();
+    if (rollNo !== undefined) student.rollNo = rollNo?.trim();
+    if (email !== undefined) student.email = email?.trim()?.toLowerCase();
+    if (phone !== undefined) student.phone = phone?.trim();
+
+    await student.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Student updated successfully',
+        data: student
+    });
+});
+
+/**
+ * @desc    Delete all students by division
+ * @route   DELETE /api/students/division/:division
+ * @access  Private
+ */
+const deleteStudentsByDivision = asyncHandler(async (req, res) => {
+    const { division } = req.params;
+
+    if (!division) {
+        res.status(400);
+        throw new Error('Please provide a division');
+    }
+
+    const result = await Student.deleteMany({
+        division: { $regex: new RegExp(`^${division}$`, 'i') }
+    });
+
+    if (result.deletedCount === 0) {
+        res.status(404);
+        throw new Error(`No students found in division ${division}`);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: `Successfully deleted ${result.deletedCount} students from division ${division}`,
+        data: {
+            deletedCount: result.deletedCount
+        }
+    });
+});
+
+/**
+ * @desc    Delete all students by year
+ * @route   DELETE /api/students/year/:year
+ * @access  Private
+ */
+const deleteStudentsByYear = asyncHandler(async (req, res) => {
+    const { year } = req.params;
+
+    if (!year) {
+        res.status(400);
+        throw new Error('Please provide a year');
+    }
+
+    const result = await Student.deleteMany({
+        year: { $regex: new RegExp(`^${year}$`, 'i') }
+    });
+
+    if (result.deletedCount === 0) {
+        res.status(404);
+        throw new Error(`No students found in year ${year}`);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: `Successfully deleted ${result.deletedCount} students from year ${year}`,
+        data: {
+            deletedCount: result.deletedCount
+        }
+    });
+});
+
+/**
+ * @desc    Get all students with advanced filters and payment summary
+ * @route   GET /api/students/management
+ * @access  Private
+ */
+const getAllStudentsAdvanced = asyncHandler(async (req, res) => {
+    const {
+        year,
+        division,
+        paymentType,
+        search,
+        sortBy = 'name',
+        sortOrder = 'asc',
+        page = 1,
+        limit = 10
+    } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build match conditions
+    const matchConditions = { isActive: true };
+    if (year) matchConditions.year = { $regex: year, $options: 'i' };
+    if (division) matchConditions.division = { $regex: division, $options: 'i' };
+    if (search) {
+        matchConditions.$or = [
+            { prn: { $regex: search, $options: 'i' } },
+            { name: { $regex: search, $options: 'i' } }
+        ];
+    }
+
+    // Aggregation pipeline
+    const pipeline = [
+        { $match: matchConditions },
+        {
+            $project: {
+                prn: 1,
+                rollNo: 1,
+                name: 1,
+                year: 1,
+                division: 1,
+                email: 1,
+                phone: 1,
+                department: 1,
+                academicYear: 1,
+                semester: 1,
+                rollNo: 1,
+                createdAt: 1,
+                feesPaid: {
+                    $sum: {
+                        $map: {
+                            input: { $filter: { input: '$fines', cond: { $eq: ['$$this.type', 'fee'] } } },
+                            as: 'f',
+                            in: '$$f.amount'
+                        }
+                    }
+                },
+                finePaid: {
+                    $sum: {
+                        $map: {
+                            input: { $filter: { input: '$fines', cond: { $eq: ['$$this.type', 'fine'] } } },
+                            as: 'f',
+                            in: '$$f.amount'
+                        }
+                    }
+                },
+                totalPaid: { $sum: '$fines.amount' }
+            }
+        }
+    ];
+
+    // Filter by payment type
+    if (paymentType === 'fee') {
+        pipeline.push({ $match: { feesPaid: { $gt: 0 } } });
+    } else if (paymentType === 'fine') {
+        pipeline.push({ $match: { finePaid: { $gt: 0 } } });
+    }
+
+    // Get total count
+    const countPipeline = [...pipeline, { $count: 'total' }];
+    const countResult = await Student.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Add sorting
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    pipeline.push({ $sort: sortOptions });
+
+    // Add pagination
+    pipeline.push({ $skip: skip }, { $limit: parseInt(limit) });
+
+    const students = await Student.aggregate(pipeline);
+
+    // Get unique years and divisions for filters
+    const filterOptions = await Student.aggregate([
+        { $match: { isActive: true } },
+        {
+            $group: {
+                _id: null,
+                years: { $addToSet: '$year' },
+                divisions: { $addToSet: '$division' }
+            }
+        }
+    ]);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            students,
+            filterOptions: filterOptions.length > 0 ? {
+                years: filterOptions[0].years.filter(y => y).sort(),
+                divisions: filterOptions[0].divisions.filter(d => d).sort()
+            } : { years: [], divisions: [] },
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / parseInt(limit)),
+                totalStudents: total,
+                hasNextPage: parseInt(page) * parseInt(limit) < total,
+                hasPrevPage: parseInt(page) > 1
+            }
+        }
+    });
+});
+
+
+
+/**
+ * @desc    Delete all students by year and division (Class)
+ * @route   DELETE /api/students/class
+ * @access  Private
+ */
+const deleteStudentsByClass = asyncHandler(async (req, res) => {
+    const { year, division } = req.body;
+
+    if (!year || !division) {
+        res.status(400);
+        throw new Error('Please provide both year and division');
+    }
+
+    const result = await Student.deleteMany({
+        year: { $regex: new RegExp(`^${year}$`, 'i') },
+        division: { $regex: new RegExp(`^${division}$`, 'i') }
+    });
+
+    if (result.deletedCount === 0) {
+        res.status(404);
+        throw new Error(`No students found in ${year} division ${division}`);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: `Successfully deleted ${result.deletedCount} students from ${year} division ${division}`,
+        data: {
+            deletedCount: result.deletedCount
+        }
+    });
+});
+
 module.exports = {
     uploadStudentsCSV,
     searchStudentByPRN,
@@ -479,5 +776,12 @@ module.exports = {
     getAllStudents,
     getStudentFines,
     markFineAsPaid,
-    deleteStudent
+    deleteStudent,
+    addStudent,
+    updateStudent,
+    deleteStudentsByDivision,
+    deleteStudentsByYear,
+    deleteStudentsByClass,
+    getAllStudentsAdvanced
 };
+

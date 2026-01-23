@@ -16,6 +16,12 @@ import AddPayment from './pages/AddPayment';
 import AddExpenditure from './pages/AddExpenditure';
 import ManageCategories from './pages/ManageCategories';
 
+// New Report Pages
+import ExpenditureReport from './pages/ExpenditureReport';
+import StudentPayments from './pages/StudentPayments';
+import StudentManagement from './pages/StudentManagement';
+import TransactionReport from './pages/TransactionReport';
+
 // Layout wrapper for authenticated pages
 const AuthenticatedLayout = ({ children }) => {
     return (
@@ -122,11 +128,58 @@ function App() {
                 }
             />
 
+            {/* New Report Routes */}
+            <Route
+                path="/admin/expenditures"
+                element={
+                    <ProtectedRoute>
+                        <AuthenticatedLayout>
+                            <ExpenditureReport />
+                        </AuthenticatedLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/admin/student-payments"
+                element={
+                    <ProtectedRoute>
+                        <AuthenticatedLayout>
+                            <StudentPayments />
+                        </AuthenticatedLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/admin/students"
+                element={
+                    <ProtectedRoute>
+                        <AuthenticatedLayout>
+                            <StudentManagement />
+                        </AuthenticatedLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/admin/transactions"
+                element={
+                    <ProtectedRoute>
+                        <AuthenticatedLayout>
+                            <TransactionReport />
+                        </AuthenticatedLayout>
+                    </ProtectedRoute>
+                }
+            />
+
             {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />}
+            />
 
             {/* 404 - Redirect to dashboard */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />}
+            />
         </Routes>
     );
 }

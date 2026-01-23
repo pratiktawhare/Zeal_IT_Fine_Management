@@ -13,11 +13,11 @@ import {
     FiPlus,
     FiCheck,
     FiClock,
-    FiDollarSign,
     FiCalendar,
     FiTrash2,
     FiFileText
 } from 'react-icons/fi';
+import { BiRupee } from 'react-icons/bi';
 
 const StudentDetails = () => {
     const { prn } = useParams();
@@ -196,7 +196,7 @@ const StudentDetails = () => {
             </div>
 
             {/* Fine Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="flex items-center justify-between">
                         <div>
@@ -204,7 +204,7 @@ const StudentDetails = () => {
                             <p className="text-2xl font-bold text-gray-800">{formatCurrency(totalFines)}</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <FiDollarSign className="w-6 h-6 text-blue-600" />
+                            <BiRupee className="w-6 h-6 text-blue-600" />
                         </div>
                     </div>
                 </div>
@@ -221,17 +221,7 @@ const StudentDetails = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500">Pending</p>
-                            <p className="text-2xl font-bold text-amber-600">{formatCurrency(pendingFines)}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                            <FiClock className="w-6 h-6 text-amber-600" />
-                        </div>
-                    </div>
-                </div>
+
             </div>
 
             {/* Fine History */}
@@ -243,7 +233,7 @@ const StudentDetails = () => {
                 {fines.length === 0 ? (
                     <div className="p-12 text-center">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <FiDollarSign className="w-8 h-8 text-gray-400" />
+                            <BiRupee className="w-8 h-8 text-gray-400" />
                         </div>
                         <p className="text-gray-500">No fines recorded for this student</p>
                     </div>

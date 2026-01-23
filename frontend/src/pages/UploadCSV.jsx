@@ -120,8 +120,8 @@ const UploadCSV = () => {
                     Your CSV file should have the following columns:
                 </p>
                 <div className="bg-white rounded-lg p-4 font-mono text-xs text-gray-700 overflow-x-auto">
-                    <p className="text-blue-600 font-semibold">Sr No, Academic Year, Semester, Year, Division, Roll No, PRN Number, Student Name, Mobile Number, Email Id</p>
-                    <p className="text-gray-500 mt-1">1, 2024-25, 1, FE, A, 101, PRN2024001, John Doe, 9876543210, john@example.com</p>
+                    <p className="text-blue-600 font-semibold">Sr No, Academic Year, Semester, Year, Division, Roll No, PRN Number, Student Name, Department, Mobile Number, Email Id</p>
+                    <p className="text-gray-500 mt-1">1, 2024-25, 1, FE, A, 101, PRN2024001, John Doe, IT, 9876543210, john@example.com</p>
                 </div>
             </div>
 
@@ -254,7 +254,7 @@ const UploadCSV = () => {
                 <p className="text-sm text-gray-500 mb-2">Need a sample file?</p>
                 <button
                     onClick={() => {
-                        const csvContent = "Sr No,Academic Year,Semester,Year,Division,Roll No,PRN Number,Student Name\n1,2024-25,1,FE,A,101,PRN2024001,John Doe\n2,2024-25,1,FE,A,102,PRN2024002,Jane Smith\n3,2024-25,1,FE,B,103,PRN2024003,Bob Johnson";
+                        const csvContent = "Sr No,Academic Year,Semester,Year,Division,Roll No,PRN Number,Student Name,Department,Mobile Number,Email Id\n1,2024-25,1,FE,A,101,PRN2024001,John Doe,IT,9876543210,john@example.com\n2,2024-25,1,FE,A,102,PRN2024002,Jane Smith,CS,9876543211,jane@example.com\n3,2024-25,1,FE,B,103,PRN2024003,Bob Johnson,ENTC,9876543212,bob@example.com";
                         const blob = new Blob([csvContent], { type: 'text/csv' });
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');

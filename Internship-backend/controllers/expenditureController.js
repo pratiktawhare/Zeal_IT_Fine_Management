@@ -312,6 +312,149 @@ const getMonthlyReport = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Get detailed expenditure report with advanced filters
+ * @route   GET /api/expenditure/report
+ * @access  Private
+ * 
+ * Query Parameters:
+ * - year: Filter by year
+ * - month: Filter by month (1-12)
+ * - fromDate: Start date range
+ * - toDate: End date range
+ * - category: Filter by category
+ * - minAmount: Minimum amount
+ * - maxAmount: Maximum amount
+ * - sortBy: 'date' or 'amount' (default: date)
+ * - sortOrder: 'asc' or 'desc' (default: desc)
+ * - page: Page number (default: 1)
+ * - limit: Results per page (default: 10)
+ */
+const getExpenditureReport = asyncHandler(async (req, res) => {
+    const {
+        year,
+        month,
+        fromDate,
+        toDate,
+        category,
+        minAmount,
+        maxAmount,
+        sortBy = 'date',
+        sortOrder = 'desc',
+        page = 1,
+        limit = 10
+    } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build filter object
+    const filter = {};
+
+    // Date filters
+    if (year && month) {
+        const startOfMonth = new Date(`${year}-${String(month).padStart(2, '0')}-01`);
+        const endOfMonth = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+        filter.date = { $gte: startOfMonth, $lte: endOfMonth };
+    } else if (year) {
+        const startOfYear = new Date(`${year}-01-01`);
+        const endOfYear = new Date(`${year}-12-31T23:59:59`);
+        filter.date = { $gte: startOfYear, $lte: endOfYear };
+    }
+
+    // Date range filter (overrides year/month)
+    if (fromDate || toDate) {
+        filter.date = {};
+        if (fromDate) filter.date.$gte = new Date(fromDate);
+        if (toDate) filter.date.$lte = new Date(toDate + 'T23:59:59');
+    }
+
+    // Category filter
+    if (category) {
+        filter.category = category;
+    }
+
+    // Amount range filter
+    if (minAmount || maxAmount) {
+        filter.amount = {};
+        if (minAmount) filter.amount.$gte = parseFloat(minAmount);
+        if (maxAmount) filter.amount.$lte = parseFloat(maxAmount);
+    }
+
+    // Build sort object
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    // Get total count
+    const total = await Expenditure.countDocuments(filter);
+
+    // Get expenditures with pagination
+    const expenditures = await Expenditure.find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('addedBy', 'name email');
+
+    // Calculate totals for filtered data
+    const totalAmountResult = await Expenditure.aggregate([
+        { $match: filter },
+        {
+            $group: {
+                _id: null,
+                totalAmount: { $sum: '$amount' },
+                count: { $sum: 1 }
+            }
+        }
+    ]);
+
+    const summary = totalAmountResult.length > 0 ? {
+        totalAmount: totalAmountResult[0].totalAmount,
+        totalRecords: totalAmountResult[0].count
+    } : {
+        totalAmount: 0,
+        totalRecords: 0
+    };
+
+    // Get category breakdown for filtered data
+    const categoryBreakdown = await Expenditure.aggregate([
+        { $match: filter },
+        {
+            $group: {
+                _id: '$category',
+                amount: { $sum: '$amount' },
+                count: { $sum: 1 }
+            }
+        },
+        { $sort: { amount: -1 } }
+    ]);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            expenditures: expenditures.map(exp => ({
+                _id: exp._id,
+                date: exp.date,
+                category: exp.category,
+                description: exp.description,
+                amount: exp.amount,
+                addedBy: exp.addedBy?.name || 'Unknown',
+                receiptNumber: exp.receiptNumber,
+                receiptNumber: exp.receiptNumber,
+                notes: exp.notes,
+                createdAt: exp.createdAt
+            })),
+            summary,
+            categoryBreakdown,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / parseInt(limit)),
+                totalRecords: total,
+                hasNextPage: parseInt(page) * parseInt(limit) < total,
+                hasPrevPage: parseInt(page) > 1
+            }
+        }
+    });
+});
+
 module.exports = {
     addExpenditure,
     getFinancialSummary,
@@ -319,5 +462,6 @@ module.exports = {
     getExpenditureById,
     updateExpenditure,
     deleteExpenditure,
-    getMonthlyReport
+    getMonthlyReport,
+    getExpenditureReport
 };

@@ -42,7 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
-        message: 'Zeal IT Accounts API is running',
+        message: 'ITSA Accounts API is running',
         timestamp: new Date().toISOString()
     });
 });
@@ -58,6 +58,9 @@ app.use('/api/expenditure', require('./routes/expenditureRoutes'));
 
 // Category routes
 app.use('/api/categories', require('./routes/categoryRoutes'));
+
+// Report routes (new)
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 // ===========================================
 // Error Handling Middleware

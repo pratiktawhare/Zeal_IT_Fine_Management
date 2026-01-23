@@ -65,7 +65,7 @@ const generateReceiptEmailHTML = (student, payment) => {
                                 <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; line-height: 56px;">
                                     <span style="font-size: 28px; color: white; font-weight: bold;">₹</span>
                                 </div>
-                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">Zeal IT Accounts</h1>
+                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">ITSA Accounts</h1>
                                 <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">Official Payment Receipt</p>
                                 <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 12px 28px; border-radius: 30px; margin-top: 20px;">
                                     <span style="color: white; font-size: 15px; font-weight: 600; letter-spacing: 0.5px;">${payment.receiptNumber || 'N/A'}</span>
@@ -161,7 +161,7 @@ const generateReceiptEmailHTML = (student, payment) => {
                             <td style="background-color: #1f2937; padding: 24px 32px; border-radius: 0 0 16px 16px; text-align: center;">
                                 <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 13px;">This is a computer generated receipt</p>
                                 <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.5); font-size: 12px;">Thank you for your payment</p>
-                                <p style="margin: 16px 0 0 0; color: rgba(255,255,255,0.4); font-size: 11px;">Zeal IT Department</p>
+                                <p style="margin: 16px 0 0 0; color: rgba(255,255,255,0.4); font-size: 11px;">ITSA Department</p>
                             </td>
                         </tr>
                         
@@ -212,7 +212,7 @@ const sendPaymentReceiptEmail = async (student, payment) => {
         };
 
         const mailOptions = {
-            from: `"Zeal IT Accounts" <${process.env.EMAIL_USER}>`,
+            from: `"ITSA Accounts" <${process.env.EMAIL_USER}>`,
             to: student.email,
             subject: `✅ Payment Receipt - ${payment.receiptNumber} | ${formatCurrency(payment.amount)}`,
             html: generateReceiptEmailHTML(student, payment)

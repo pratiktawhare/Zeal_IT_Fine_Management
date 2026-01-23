@@ -15,7 +15,8 @@ const {
     getExpenditureById,
     updateExpenditure,
     deleteExpenditure,
-    getMonthlyReport
+    getMonthlyReport,
+    getExpenditureReport
 } = require('../controllers/expenditureController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -65,6 +66,26 @@ router.get('/summary', getFinancialSummary);
  * - year: Year for report (default: current year)
  */
 router.get('/report/monthly', getMonthlyReport);
+
+/**
+ * @route   GET /api/expenditure/report
+ * @desc    Get detailed expenditure report with advanced filters
+ * @access  Private
+ * 
+ * Query Parameters:
+ * - year: Filter by year
+ * - month: Filter by month (1-12)
+ * - fromDate: Start date range
+ * - toDate: End date range
+ * - category: Filter by category
+ * - minAmount: Minimum amount
+ * - maxAmount: Maximum amount
+ * - sortBy: 'date' or 'amount' (default: date)
+ * - sortOrder: 'asc' or 'desc' (default: desc)
+ * - page: Page number (default: 1)
+ * - limit: Results per page (default: 10)
+ */
+router.get('/report', getExpenditureReport);
 
 /**
  * @route   GET /api/expenditure

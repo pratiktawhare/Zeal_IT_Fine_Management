@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { expenditureAPI } from '../services/api';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
@@ -57,7 +57,7 @@ const Dashboard = () => {
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-                <p className="text-gray-600 mt-1">Welcome to Zeal IT Accounts Portal</p>
+                <p className="text-gray-600 mt-1">Welcome to ITSA Accounts Portal</p>
             </div>
 
             {error && (
@@ -86,21 +86,21 @@ const Dashboard = () => {
                 </div>
 
                 {/* Total Expenditure */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
+                <Link to="/admin/expenditures" className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover cursor-pointer hover:border-red-200 transition-colors">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total Expenditure</p>
                             <p className="text-2xl font-bold text-gray-800 mt-1">
                                 {formatCurrency(summary?.financial?.totalExpenditure)}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">All department expenses</p>
+                            <p className="text-xs text-gray-400 mt-1">Click to view report →</p>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-xl 
                             flex items-center justify-center shadow-lg shadow-red-200">
                             <FiTrendingDown className="w-6 h-6 text-white" />
                         </div>
                     </div>
-                </div>
+                </Link>
 
                 {/* Balance */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
@@ -121,26 +121,28 @@ const Dashboard = () => {
                 </div>
 
                 {/* Total Students */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
+                <a href="/admin/students" target="_blank" rel="noopener noreferrer"
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover cursor-pointer hover:border-purple-200 transition-colors">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total Students</p>
                             <p className="text-2xl font-bold text-gray-800 mt-1">
                                 {summary?.statistics?.totalStudents || 0}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">Registered in system</p>
+                            <p className="text-xs text-gray-400 mt-1">Click to manage →</p>
                         </div>
                         <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl 
                             flex items-center justify-center shadow-lg shadow-purple-200">
                             <FiUsers className="w-6 h-6 text-white" />
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {/* Quick Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                <Link to="/admin/transactions"
+                    className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer">
                     <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
                             <FiFileText className="w-5 h-5 text-white" />
@@ -152,9 +154,10 @@ const Dashboard = () => {
                             </p>
                         </div>
                     </div>
-                </div>
+                </Link>
 
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                <Link to="/admin/student-payments"
+                    className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 hover:border-blue-300 transition-colors cursor-pointer">
                     <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
                             <FiUsers className="w-5 h-5 text-white" />
@@ -166,7 +169,7 @@ const Dashboard = () => {
                             </p>
                         </div>
                     </div>
-                </div>
+                </Link>
             </div>
 
             {/* Category Breakdown & Quick Actions */}
@@ -253,18 +256,18 @@ const Dashboard = () => {
                             <span className="text-sm font-medium text-amber-800">Add Expenditure</span>
                         </Link>
 
-                        <button
-                            onClick={fetchSummary}
+                        <Link
+                            to="/admin/transactions"
                             className="flex flex-col items-center justify-center p-6 bg-gradient-to-br 
-                         from-gray-50 to-gray-100 rounded-xl border border-gray-200 
-                         hover:from-gray-100 hover:to-gray-200 transition-all group"
+                         from-purple-50 to-purple-100 rounded-xl border border-purple-200 
+                         hover:from-purple-100 hover:to-purple-200 transition-all group"
                         >
-                            <div className="w-12 h-12 bg-gray-600 rounded-xl flex items-center justify-center 
+                            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center 
                               mb-3 group-hover:scale-110 transition-transform">
-                                <FiTrendingUp className="w-6 h-6 text-white" />
+                                <FiFileText className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-sm font-medium text-gray-800">Refresh Data</span>
-                        </button>
+                            <span className="text-sm font-medium text-purple-800">View Transactions</span>
+                        </Link>
                     </div>
                 </div>
             </div>

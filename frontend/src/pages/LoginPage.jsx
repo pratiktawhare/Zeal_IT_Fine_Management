@@ -63,7 +63,7 @@ const LoginPage = () => {
                         <span className="text-4xl font-bold text-white">₹</span>
                     </div>
                     <h1 className="text-2xl font-bold text-white mb-2">
-                        Zeal IT Accounts
+                        ITSA Accounts
                     </h1>
                     <p className="text-white/70 text-sm">
                         Admin Portal - Secure Login

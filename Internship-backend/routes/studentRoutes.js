@@ -16,7 +16,13 @@ const {
     getAllStudents,
     getStudentFines,
     markFineAsPaid,
-    deleteStudent
+    deleteStudent,
+    addStudent,
+    updateStudent,
+    deleteStudentsByDivision,
+    deleteStudentsByYear,
+    deleteStudentsByClass,
+    getAllStudentsAdvanced
 } = require('../controllers/studentController');
 const { protect } = require('../middleware/authMiddleware');
 const { upload, handleMulterError } = require('../middleware/uploadMiddleware');
@@ -79,6 +85,49 @@ router.get('/search/:prn', searchStudentByPRN);
  * }
  */
 router.post('/add-fine/:prn', addFineToStudent);
+
+// ===========================================
+// Student Management Routes (MUST be before /:prn routes)
+// ===========================================
+
+/**
+ * @route   GET /api/students/management
+ * @desc    Get all students with advanced filters and payment summary
+ * @access  Private
+ */
+router.get('/management', getAllStudentsAdvanced);
+
+/**
+ * @route   POST /api/students/add
+ * @desc    Add a new student
+ * @access  Private
+ */
+router.post('/add', addStudent);
+
+/**
+ * @route   PUT /api/students/update/:prn
+ * @desc    Update student details
+ * @access  Private
+ */
+router.put('/update/:prn', updateStudent);
+
+/**
+ * @route   DELETE /api/students/division/:division
+ * @desc    Delete all students by division
+ * @access  Private
+ */
+router.delete('/division/:division', deleteStudentsByDivision);
+
+/**
+ * @route   DELETE /api/students/year/:year
+ * @desc    Delete all students by year
+ * @access  Private
+ */
+router.delete('/year/:year', deleteStudentsByYear);
+
+// ===========================================
+// Dynamic PRN Routes (MUST be after specific routes)
+// ===========================================
 
 /**
  * @route   GET /api/students/:prn

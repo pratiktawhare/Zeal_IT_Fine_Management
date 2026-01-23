@@ -35,7 +35,7 @@ const ReceiptModal = ({ isOpen, onClose, payment, student }) => {
                     <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
                         <span style="font-size: 28px; color: white; font-weight: bold;">₹</span>
                     </div>
-                    <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">Zeal IT Accounts</h1>
+                    <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">ITSA Accounts</h1>
                     <p style="margin: 6px 0 0 0; color: rgba(255,255,255,0.85); font-size: 13px;">Official Payment Receipt</p>
                     <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 10px 24px; border-radius: 25px; margin-top: 16px;">
                         <span style="color: white; font-size: 14px; font-weight: 600; letter-spacing: 0.5px;">${payment.receiptNumber || 'N/A'}</span>
@@ -126,7 +126,7 @@ const ReceiptModal = ({ isOpen, onClose, payment, student }) => {
                 <!-- Footer -->
                 <div style="background: #1f2937; padding: 20px 24px; text-align: center; border-radius: 0 0 12px 12px;">
                     <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">This is a computer generated receipt</p>
-                    <p style="margin: 6px 0 0 0; color: rgba(255,255,255,0.5); font-size: 11px;">Thank you for your payment • Zeal IT Department</p>
+                    <p style="margin: 6px 0 0 0; color: rgba(255,255,255,0.5); font-size: 11px;">Thank you for your payment • ITSA Department</p>
                 </div>
             </div>
         `;
@@ -218,7 +218,7 @@ const ReceiptModal = ({ isOpen, onClose, payment, student }) => {
                             <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 rounded-full mb-3">
                                 <span className="text-2xl font-bold">₹</span>
                             </div>
-                            <h1 className="text-xl font-bold">Zeal IT Accounts</h1>
+                            <h1 className="text-xl font-bold">ITSA Accounts</h1>
                             <p className="text-white/80 text-sm mt-1">Official Payment Receipt</p>
                             <div className="inline-block bg-white/20 backdrop-blur px-5 py-2.5 rounded-full mt-4">
                                 <span className="text-sm font-semibold tracking-wide">
@@ -297,7 +297,7 @@ const ReceiptModal = ({ isOpen, onClose, payment, student }) => {
                         {/* Footer */}
                         <div className="bg-gray-800 p-5 text-center">
                             <p className="text-gray-400 text-xs">This is a computer generated receipt</p>
-                            <p className="text-gray-500 text-[10px] mt-1">Thank you for your payment • Zeal IT Department</p>
+                            <p className="text-gray-500 text-[10px] mt-1">Thank you for your payment • ITSA Department</p>
                         </div>
                     </div>
                 </div>

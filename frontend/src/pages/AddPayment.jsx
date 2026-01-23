@@ -5,13 +5,13 @@ import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
 import {
     FiArrowLeft,
-    FiDollarSign,
     FiFileText,
     FiCalendar,
     FiCheck,
     FiUser,
     FiTag
 } from 'react-icons/fi';
+import { BiRupee } from 'react-icons/bi';
 
 const AddPayment = () => {
     const { prn } = useParams();
@@ -30,7 +30,7 @@ const AddPayment = () => {
         type: 'fine',
         category: '',
         customCategory: '',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toLocaleString('sv').slice(0, 16).replace(' ', 'T') // Format: YYYY-MM-DDTHH:mm
     });
 
     useEffect(() => {
@@ -101,7 +101,7 @@ const AddPayment = () => {
                 type: 'fine',
                 category: '',
                 customCategory: '',
-                date: new Date().toISOString().split('T')[0]
+                date: new Date().toLocaleString('sv').slice(0, 16).replace(' ', 'T')
             });
 
             // Redirect after delay
@@ -217,7 +217,7 @@ const AddPayment = () => {
                                     className="sr-only"
                                 />
                                 <div className="text-center">
-                                    <FiDollarSign className={`w-6 h-6 mx-auto mb-1 ${formData.type === 'fine' ? 'text-red-600' : 'text-gray-400'}`} />
+                                    <BiRupee className={`w-6 h-6 mx-auto mb-1 ${formData.type === 'fine' ? 'text-red-600' : 'text-gray-400'}`} />
                                     <span className="font-medium">Fine</span>
                                     <p className="text-xs text-gray-500 mt-1">Penalty charges</p>
                                 </div>
@@ -343,17 +343,17 @@ const AddPayment = () => {
                         <div className="relative">
                             <FiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
-                                type="date"
+                                type="datetime-local"
                                 id="date"
                                 name="date"
                                 value={formData.date}
                                 onChange={handleChange}
-                                max={new Date().toISOString().split('T')[0]}
+                                max={new Date().toLocaleString('sv').slice(0, 16).replace(' ', 'T')}
                                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
                            focus:ring-primary-500 focus:border-primary-500 text-gray-800"
                             />
                         </div>
-                        <p className="mt-1 text-sm text-gray-500">Defaults to today if not specified</p>
+                        <p className="mt-1 text-sm text-gray-500">Defaults to current time if not specified</p>
                     </div>
 
                     {/* Submit Button */}
@@ -382,7 +382,7 @@ const AddPayment = () => {
                                 </>
                             ) : (
                                 <>
-                                    <FiDollarSign className="w-5 h-5" />
+                                    <BiRupee className="w-5 h-5" />
                                     <span>Add {formData.type === 'fine' ? 'Fine' : 'Fee'}</span>
                                 </>
                             )}

@@ -77,6 +77,7 @@ export const expenditureAPI = {
     update: (id, data) => api.put(`/expenditure/${id}`, data),
     delete: (id) => api.delete(`/expenditure/${id}`),
     getMonthlyReport: (year) => api.get('/expenditure/report/monthly', { params: { year } }),
+    getReport: (params) => api.get('/expenditure/report', { params }),
 };
 
 // ============================================
@@ -90,5 +91,29 @@ export const categoryAPI = {
     delete: (id) => api.delete(`/categories/${id}`),
 };
 
+// ============================================
+// Reports API (New)
+// ============================================
+
+export const reportsAPI = {
+    getStudentPayments: (params) => api.get('/reports/student-payments', { params }),
+    getTransactions: (params) => api.get('/reports/transactions', { params }),
+};
+
+// ============================================
+// Extended Students API (New functions)
+// ============================================
+
+export const studentManagementAPI = {
+    getAll: (params) => api.get('/students/management', { params }),
+    addStudent: (data) => api.post('/students/add', data),
+    updateStudent: (prn, data) => api.put(`/students/update/${prn}`, data),
+    deleteStudent: (prn) => api.delete(`/students/${prn}`),
+    deleteByDivision: (division) => api.delete(`/students/division/${division}`),
+    deleteByYear: (year) => api.delete(`/students/year/${year}`),
+    deleteByClass: (year, division) => api.delete('/students/class', { data: { year, division } }),
+};
+
 export default api;
+
 
