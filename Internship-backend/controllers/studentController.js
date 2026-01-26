@@ -261,7 +261,7 @@ const getStudentByPRN = asyncHandler(async (req, res) => {
  */
 const addFineToStudent = asyncHandler(async (req, res) => {
     const { prn } = req.params;
-    const { amount, reason, type, category, date } = req.body;
+    const { amount, reason, type, category, date, sendEmail = true } = req.body;
 
     // Validate required fields (only amount is required now)
     if (!amount) {
@@ -307,10 +307,12 @@ const addFineToStudent = asyncHandler(async (req, res) => {
     // Get the saved payment with _id
     const savedPayment = student.fines[student.fines.length - 1];
 
-    // Send email receipt to student (async, don't wait)
-    sendPaymentReceiptEmail(student, savedPayment).catch(err => {
-        console.error('Email sending failed:', err.message);
-    });
+    // Send email receipt to student (async, don't wait) - only if sendEmail is true
+    if (sendEmail) {
+        sendPaymentReceiptEmail(student, savedPayment).catch(err => {
+            console.error('Email sending failed:', err.message);
+        });
+    }
 
     res.status(201).json({
         success: true,

@@ -32,6 +32,7 @@ const AddPayment = () => {
         customCategory: '',
         date: new Date().toLocaleString('sv').slice(0, 16).replace(' ', 'T') // Format: YYYY-MM-DDTHH:mm
     });
+    const [sendEmail, setSendEmail] = useState(true);
 
     useEffect(() => {
         fetchData();
@@ -89,7 +90,8 @@ const AddPayment = () => {
                 reason: formData.reason.trim() || '',
                 type: formData.type,
                 category: selectedCategory,
-                date: formData.date
+                date: formData.date,
+                sendEmail: sendEmail
             });
 
             setSuccess(true);
@@ -354,6 +356,20 @@ const AddPayment = () => {
                             />
                         </div>
                         <p className="mt-1 text-sm text-gray-500">Defaults to current time if not specified</p>
+                    </div>
+
+                    {/* Email Notification Option */}
+                    <div className="flex items-center space-x-3">
+                        <input
+                            type="checkbox"
+                            id="sendEmail"
+                            checked={sendEmail}
+                            onChange={(e) => setSendEmail(e.target.checked)}
+                            className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer"
+                        />
+                        <label htmlFor="sendEmail" className="text-sm font-medium text-gray-700 cursor-pointer">
+                            Send email notification to student
+                        </label>
                     </div>
 
                     {/* Submit Button */}
