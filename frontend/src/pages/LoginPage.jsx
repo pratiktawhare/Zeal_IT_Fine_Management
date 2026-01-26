@@ -59,8 +59,8 @@ const LoginPage = () => {
             <div className="relative w-full max-w-md animate-fadeIn">
                 {/* Logo Card */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-6 text-center border border-white/20">
-                    <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span className="text-4xl font-bold text-white">₹</span>
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span ><img src="/images/itsaLogo.jpeg" alt="logo" className="w-20 h-20 rounded-full object-cover" /></span>
                     </div>
                     <h1 className="text-2xl font-bold text-white mb-2">
                         ITSA Accounts

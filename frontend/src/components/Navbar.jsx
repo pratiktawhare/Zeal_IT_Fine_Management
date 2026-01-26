@@ -65,7 +65,9 @@ const Navbar = () => {
                     {/* Logo */}
                     <Link to="/dashboard" className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                            <span className="text-xl font-bold text-white">₹</span>
+                            <span className="text-xl font-bold text-white">
+                                <img src="/images/itsaLogo.jpeg" alt="logo" className="w-8 h-8 rounded-full object-cover" />
+                            </span>
                         </div>
                         <span className="font-semibold text-lg hidden sm:block">
                             ITSA Accounts

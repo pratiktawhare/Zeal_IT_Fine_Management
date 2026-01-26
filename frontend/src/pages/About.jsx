@@ -59,25 +59,25 @@ const About = () => {
             id: 3,
             name: "Komal Mhaske",
             image: "/images/komal.jpeg",
-            github: "https://github.com/",
-            email: "member3@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/Komal251005",
+            email: "komalmhaske.253@gmail.com",
+            linkedin: "https://www.linkedin.com/in/komal-mhaske-8b554331a/"
         },
         {
             id: 4,
             name: "Tanishka Patil",
             image: "/images/tanishka.jpeg",
-            github: "https://github.com/",
-            email: "member4@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/PatilTanishkaa",
+            email: "tanishkapatil26oct@gmail.com",
+            linkedin: "https://www.linkedin.com/in/tanishkapatillnkdin/"
         },
         {
             id: 5,
             name: "Abhishek Tamte",
             image: "/images/Tamte.jpeg",
-            github: "https://github.com/",
-            email: "member5@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/abhishek200604",
+            email: "abhishektamte20@gmail.com",
+            linkedin: "https://www.linkedin.com/in/abhishek-tamte-0b32583a2/"
         },
         {
             id: 6,
@@ -92,16 +92,16 @@ const About = () => {
             name: "Arbaj Sande",
             image: "#",
             github: "https://github.com/",
-            email: "member7@example.com",
+            email: "arbajsande786@gmail.com",
             linkedin: "https://linkedin.com/"
         },
         {
             id: 8,
             name: "Abhijeet Suryawanshi",
             image: "#",
-            github: "https://github.com/",
-            email: "member8@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/Abhijeet-dev07",
+            email: "abhijeetsuryawnshi23@gmail.com",
+            linkedin: "https://www.linkedin.com/in/abhijeet-suryawanshi-21a587294"
         }
 
     ];
