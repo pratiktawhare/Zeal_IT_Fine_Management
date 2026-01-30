@@ -44,64 +44,64 @@ const About = () => {
             name: "Pratik Tawhare",
             image: "/images/Pratik.jpeg",
             github: "https://github.com/pratiktawhare",
-            email: "pratik@example.com",
-            linkedin: "https://linkedin.com/"
+            email: "pratiktawhare3gmail.com",
+            linkedin: "https://www.linkedin.com/in/pratik-tawhare"
         },
         {
             id: 2,
             name: "Aary Thasal",
             image: "/images/Aary.jpeg",
-            github: "https://github.com/",
-            email: "member2@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/AaryThasal",
+            email: "thasalaary@gmail.com",
+            linkedin: "https://www.linkedin.com/in/aary-thasal-9255392a7"
         },
         {
             id: 3,
             name: "Komal Mhaske",
             image: "/images/komal.jpeg",
-            github: "https://github.com/",
-            email: "member3@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/Komal251005",
+            email: "komalmhaske.253@gmail.com",
+            linkedin: "https://www.linkedin.com/in/komal-mhaske-8b554331a/"
         },
         {
             id: 4,
             name: "Tanishka Patil",
             image: "/images/tanishka.jpeg",
-            github: "https://github.com/",
-            email: "member4@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/PatilTanishkaa",
+            email: "tanishkapatil26oct@gmail.com",
+            linkedin: "https://www.linkedin.com/in/tanishkapatillnkdin/"
         },
         {
             id: 5,
             name: "Abhishek Tamte",
             image: "/images/Tamte.jpeg",
-            github: "https://github.com/",
-            email: "member5@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/abhishek200604",
+            email: "abhishektamte20@gmail.com",
+            linkedin: "https://www.linkedin.com/in/abhishek-tamte-09b81421a/"
         },
         {
             id: 6,
             name: "Akash Patil",
             image: "/images/Akash.jpeg",
-            github: "https://github.com/",
-            email: "member6@example.com",
-            linkedin: "https://linkedin.com/"
+            github: "https://github.com/Akashpatil2005",
+            email: "apatil99448@gmail.com",
+            linkedin: "https://www.linkedin.com/in/akash-patil-b08335290/"
         },
         {
             id: 7,
             name: "Arbaj Sande",
-            image: "#",
-            github: "https://github.com/",
-            email: "member7@example.com",
-            linkedin: "https://linkedin.com/"
+            image: "/images/arbaj.jpeg",
+            github: "https://github.com/ArbajSande",
+            email: "arbajsande786@gmail.com",
+            linkedin: "https://www.linkedin.com/in/arbaj-sande-47bb1a31b"
         },
         {
             id: 8,
             name: "Abhijeet Suryawanshi",
-            image: "#",
+            image: "/images/abhijeet.jpeg",
             github: "https://github.com/",
-            email: "member8@example.com",
-            linkedin: "https://linkedin.com/"
+            email: "abhijeetsuryawnshi23@gmail.com",
+            linkedin: "www.linkedin.com/in/abhijeet-suryawanshi-21a587294"
         }
 
     ];
