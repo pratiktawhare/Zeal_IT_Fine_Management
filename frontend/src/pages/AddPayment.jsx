@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { studentsAPI, categoryAPI } from '../services/api';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
@@ -16,6 +16,7 @@ import { BiRupee } from 'react-icons/bi';
 const AddPayment = () => {
     const { prn } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [student, setStudent] = useState(null);
     const [categories, setCategories] = useState([]);
@@ -108,7 +109,11 @@ const AddPayment = () => {
 
             // Redirect after delay
             setTimeout(() => {
-                navigate(`/student/${prn}`);
+                if (location.state?.source === 'details') {
+                    navigate(-1);
+                } else {
+                    navigate(`/student/${prn}`, { replace: true });
+                }
             }, 2000);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to add payment. Please try again.');

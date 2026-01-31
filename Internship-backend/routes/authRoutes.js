@@ -8,12 +8,25 @@
 const express = require('express');
 const router = express.Router();
 const {
+    checkSetupStatus,
     loginAdmin,
     getProfile,
     registerAdmin,
-    changePassword
+    changePassword,
+    updateProfile,
+    forgotPassword,
+    verifyOtp,
+    resetPassword
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+const { loginLimiter, otpLimiter, forgotPasswordLimiter } = require('../middleware/rateLimitMiddleware');
+
+/**
+ * @route   GET /api/auth/setup-status
+ * @desc    Check if first-time setup is required
+ * @access  Public
+ */
+router.get('/setup-status', checkSetupStatus);
 
 /**
  * @route   POST /api/auth/login
@@ -26,23 +39,51 @@ const { protect } = require('../middleware/authMiddleware');
  *   "password": "your_password"
  * }
  */
-router.post('/login', loginAdmin);
+router.post('/login', loginLimiter, loginAdmin);
 
 /**
  * @route   POST /api/auth/register
- * @desc    Register a new admin (initial setup)
+ * @desc    Register first admin (only works when no admin exists)
+ * @access  Public (disabled after first admin created)
+ * 
+ * Request Body:
+ * {
+ *   "password": "your_password",
+ *   "name": "Admin Name" (optional)
+ * }
+ */
+router.post('/register', registerAdmin);
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Request password reset OTP (sent to EMAIL_USER)
+ * @access  Public
+ */
+router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
+
+/**
+ * @route   POST /api/auth/verify-otp
+ * @desc    Verify OTP code
  * @access  Public
  * 
  * Request Body:
  * {
- *   "email": "admin@college.edu",
- *   "password": "your_password",
- *   "name": "Admin Name" (optional)
+ *   "otp": "123456"
  * }
- * 
- * NOTE: This route should be disabled or protected after initial admin setup
  */
-router.post('/register', registerAdmin);
+router.post('/verify-otp', otpLimiter, verifyOtp);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password after OTP verification
+ * @access  Public
+ * 
+ * Request Body:
+ * {
+ *   "newPassword": "new_password"
+ * }
+ */
+router.post('/reset-password', resetPassword);
 
 /**
  * @route   GET /api/auth/profile
@@ -67,4 +108,17 @@ router.get('/profile', protect, getProfile);
  */
 router.put('/change-password', protect, changePassword);
 
+/**
+ * @route   PUT /api/auth/update-profile
+ * @desc    Update admin profile (name only)
+ * @access  Private
+ * 
+ * Request Body:
+ * {
+ *   "name": "New Name"
+ * }
+ */
+router.put('/update-profile', protect, updateProfile);
+
 module.exports = router;
+

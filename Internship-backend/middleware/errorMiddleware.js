@@ -20,17 +20,21 @@ const notFound = (req, res, next) => {
  * Handles all errors passed to next() and uncaught errors
  */
 const errorHandler = (err, req, res, next) => {
-    // Log error for debugging (in development)
-    if (process.env.NODE_ENV === 'development') {
-        console.error('===========================================');
-        console.error('Error:', err.message);
-        console.error('Stack:', err.stack);
-        console.error('===========================================');
-    }
-
     // Determine status code
     // If status is 200 (default OK), change to 500 for errors
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+
+    // Log error for debugging (in development)
+    if (process.env.NODE_ENV === 'development') {
+        // Only log stack trace for server errors (500)
+        // For client errors (4xx), just log the message to keep terminal clean
+        if (statusCode >= 500) {
+            console.error('===========================================');
+            console.error('Error:', err.message);
+            console.error('Stack:', err.stack);
+            console.error('===========================================');
+        }
+    }
 
     // Handle specific error types
     let message = err.message;

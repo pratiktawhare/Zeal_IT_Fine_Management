@@ -20,6 +20,12 @@ import About from './pages/About';
 // New Report Pages
 import StudentManagement from './pages/StudentManagement';
 import TransactionReport from './pages/TransactionReport';
+import StudentFeesLedger from './pages/StudentFeesLedger';
+
+// Auth Pages
+import FirstTimeSetup from './pages/FirstTimeSetup';
+import ForgotPassword from './pages/ForgotPassword';
+import SystemAdmin from './pages/SystemAdmin';
 
 // Layout wrapper for authenticated pages
 const AuthenticatedLayout = ({ children }) => {
@@ -34,7 +40,7 @@ const AuthenticatedLayout = ({ children }) => {
 };
 
 function App() {
-    const { loading } = useAuth();
+    const { loading, setupRequired } = useAuth();
 
     if (loading) {
         return (
@@ -46,8 +52,24 @@ function App() {
 
     return (
         <Routes>
-            {/* Public Route */}
-            <Route path="/login" element={<LoginPage />} />
+            {/* First-Time Setup Route */}
+            <Route
+                path="/setup"
+                element={
+                    setupRequired ? <FirstTimeSetup /> : <Navigate to="/login" replace />
+                }
+            />
+
+            {/* Forgot Password Route */}
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+
+            {/* Public Route - Redirect to setup if needed */}
+            <Route
+                path="/login"
+                element={
+                    setupRequired ? <Navigate to="/setup" replace /> : <LoginPage />
+                }
+            />
 
             {/* Protected Routes */}
             <Route
@@ -138,7 +160,7 @@ function App() {
                 }
             />
 
-            {/* New Report Routes */}
+            {/* Admin Routes */}
             <Route
                 path="/admin/students"
                 element={
@@ -161,15 +183,46 @@ function App() {
                 }
             />
 
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />}
+            <Route
+                path="/admin/settings"
+                element={
+                    <ProtectedRoute>
+                        <AuthenticatedLayout>
+                            <SystemAdmin />
+                        </AuthenticatedLayout>
+                    </ProtectedRoute>
+                }
             />
 
-            {/* 404 - Redirect to dashboard */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />}
+            <Route
+                path="/admin/fees-ledger"
+                element={
+                    <ProtectedRoute>
+                        <AuthenticatedLayout>
+                            <StudentFeesLedger />
+                        </AuthenticatedLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Default redirect */}
+            <Route
+                path="/"
+                element={
+                    setupRequired ? <Navigate to="/setup" replace /> : <Navigate to="/dashboard" replace />
+                }
+            />
+
+            {/* 404 - Redirect to dashboard or setup */}
+            <Route
+                path="*"
+                element={
+                    setupRequired ? <Navigate to="/setup" replace /> : <Navigate to="/dashboard" replace />
+                }
             />
         </Routes>
     );
 }
 
 export default App;
+

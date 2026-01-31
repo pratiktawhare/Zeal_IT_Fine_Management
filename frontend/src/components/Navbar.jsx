@@ -40,6 +40,7 @@ const Navbar = () => {
 
     const reportLinks = [
         { path: '/admin/students', label: 'Student Management' },
+        { path: '/admin/fees-ledger', label: 'Fee Records' },
         { path: '/admin/transactions', label: 'Transactions' },
     ];
 
@@ -141,10 +142,13 @@ const Navbar = () => {
 
                     {/* User Menu */}
                     <div className="hidden md:flex items-center space-x-4">
-                        <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/10 rounded-lg">
+                        <Link
+                            to="/admin/settings"
+                            className="flex items-center space-x-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                        >
                             <FiUser className="w-4 h-4" />
                             <span className="text-sm font-medium">{admin?.name || 'Admin'}</span>
-                        </div>
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="flex items-center space-x-2 px-4 py-2 bg-red-500/80 hover:bg-red-500 

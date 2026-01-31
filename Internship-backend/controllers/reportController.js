@@ -226,7 +226,8 @@ const getTransactions = asyncHandler(async (req, res) => {
         sortBy = 'date',
         sortOrder = 'desc',
         division, // Add division filter
-        studentClass // Add class filter
+        studentClass, // Add class filter
+        search // Add search filter
     } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -260,7 +261,23 @@ const getTransactions = asyncHandler(async (req, res) => {
 
     // Get income transactions (from student fines)
     if (type === 'all' || type === 'income') {
+        // Build student match for search
+        // Build student match for search (Pre-filter students)
+        const studentMatch = { isActive: true };
+        let searchRegex = null;
+
+        if (search) {
+            searchRegex = { $regex: search, $options: 'i' };
+            studentMatch.$or = [
+                { prn: searchRegex },
+                { name: searchRegex },
+                { rollNo: searchRegex },
+                { 'fines.receiptNumber': searchRegex } // Allow finding student by receipt
+            ];
+        }
+
         const incomePipeline = [
+            { $match: studentMatch },
             { $unwind: '$fines' },
             {
                 $project: {
@@ -268,12 +285,14 @@ const getTransactions = asyncHandler(async (req, res) => {
                     transactionType: { $literal: 'income' },
                     studentPRN: '$prn',
                     studentName: '$name',
-                    studentDivision: '$division', // Project division
-                    studentClass: '$year', // Project class/year
+                    studentRollNo: '$rollNo',
+                    studentDivision: '$division',
+                    studentClass: '$year',
                     category: '$fines.category',
                     description: '$fines.reason',
                     amount: '$fines.amount',
                     paymentType: '$fines.type',
+                    paymentMode: { $ifNull: ['$fines.paymentMode', 'cash'] },
                     receiptNumber: '$fines.receiptNumber',
                     createdAt: '$fines.createdAt'
                 }
@@ -286,8 +305,18 @@ const getTransactions = asyncHandler(async (req, res) => {
         if (Object.keys(amountFilter).length > 0) incomeMatch.amount = amountFilter;
         if (category) incomeMatch.category = { $regex: category, $options: 'i' };
         if (paymentType && paymentType !== 'all') incomeMatch.paymentType = paymentType;
-        if (division) incomeMatch.studentDivision = { $regex: division, $options: 'i' }; // Filter by division
-        if (studentClass) incomeMatch.studentClass = { $regex: studentClass, $options: 'i' }; // Filter by class
+        if (division) incomeMatch.studentDivision = { $regex: division, $options: 'i' };
+        if (studentClass) incomeMatch.studentClass = { $regex: studentClass, $options: 'i' };
+
+        // Post-unwind Search Filter
+        if (search && searchRegex) {
+            incomeMatch.$or = [
+                { studentPRN: searchRegex },
+                { studentName: searchRegex },
+                { studentRollNo: searchRegex },
+                { receiptNumber: searchRegex }
+            ];
+        }
 
         if (Object.keys(incomeMatch).length > 0) {
             incomePipeline.push({ $match: incomeMatch });
@@ -307,6 +336,16 @@ const getTransactions = asyncHandler(async (req, res) => {
         if (Object.keys(amountFilter).length > 0) expenditureMatch.amount = amountFilter;
         if (category) expenditureMatch.category = { $regex: category, $options: 'i' };
 
+        // Apply search to expenditures too
+        if (search) {
+            const searchRegex = { $regex: search, $options: 'i' };
+            expenditureMatch.$or = [
+                { description: searchRegex },
+                { receiptNumber: searchRegex },
+                { category: searchRegex }
+            ];
+        }
+
         const expenditures = await Expenditure.find(expenditureMatch)
             .populate('addedBy', 'name email')
             .lean();
@@ -322,7 +361,7 @@ const getTransactions = asyncHandler(async (req, res) => {
             description: exp.description,
             amount: exp.amount,
             paymentType: null,
-            receiptNumber: exp.receiptNumber,
+            paymentType: null,
             receiptNumber: exp.receiptNumber,
             addedBy: exp.addedBy?.name || 'Unknown',
             createdAt: exp.createdAt

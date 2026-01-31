@@ -47,6 +47,21 @@ const adminSchema = new mongoose.Schema({
     // Last login timestamp
     lastLogin: {
         type: Date
+    },
+
+    // Password Reset OTP fields
+    resetOtp: {
+        type: String,
+        select: false
+    },
+    resetOtpExpiry: {
+        type: Date,
+        select: false
+    },
+    otpVerified: {
+        type: Boolean,
+        default: false,
+        select: false
     }
 });
 

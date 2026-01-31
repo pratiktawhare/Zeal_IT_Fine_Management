@@ -37,7 +37,7 @@ const StudentManagement = () => {
 
     const [filters, setFilters] = useState({
         year: '', division: '', search: '',
-        sortBy: 'rollNo', sortOrder: 'asc', page: 1, limit: 10
+        sortBy: 'rollNo', sortOrder: 'asc', page: 1, limit: 20000
     });
 
     const [formData, setFormData] = useState({
@@ -304,28 +304,7 @@ const StudentManagement = () => {
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-                        <select value={filters.limit} onChange={(e) => setFilters(prev => ({ ...prev, limit: e.target.value, page: 1 }))}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm">
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                        </select>
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-600">Page {pagination.currentPage} of {pagination.totalPages}</span>
-                            <div className="flex gap-2">
-                                <button onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
-                                    disabled={!pagination.hasPrevPage} className="p-2 rounded border disabled:opacity-50">
-                                    <FiChevronLeft />
-                                </button>
-                                <button onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
-                                    disabled={!pagination.hasNextPage} className="p-2 rounded border disabled:opacity-50">
-                                    <FiChevronRight />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Pagination Removed */}
                 </div>
             )}
 

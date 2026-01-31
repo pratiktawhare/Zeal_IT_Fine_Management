@@ -231,16 +231,16 @@ const Dashboard = () => {
                         </Link>
 
                         <Link
-                            to="/search"
+                            to="/admin/fees-ledger"
                             className="flex flex-col items-center justify-center p-6 bg-gradient-to-br 
                          from-secondary-50 to-secondary-100 rounded-xl border border-secondary-200 
                          hover:from-secondary-100 hover:to-secondary-200 transition-all group"
                         >
                             <div className="w-12 h-12 bg-secondary-600 rounded-xl flex items-center justify-center 
                               mb-3 group-hover:scale-110 transition-transform">
-                                <FiSearch className="w-6 h-6 text-white" />
+                                <FiFileText className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-sm font-medium text-secondary-800">Search Student</span>
+                            <span className="text-sm font-medium text-secondary-800">Fee Records</span>
                         </Link>
 
                         <Link

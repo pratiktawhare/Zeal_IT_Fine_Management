@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiMail, FiLock, FiLogIn, FiAlertCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 
@@ -160,6 +160,15 @@ const LoginPage = () => {
                     <p className="mt-6 text-center text-sm text-gray-500">
                         Protected admin portal. Unauthorized access is prohibited.
                     </p>
+
+                    <div className="mt-4 text-center">
+                        <Link
+                            to="/forgot-password"
+                            className="text-sm text-primary-600 hover:text-primary-700 hover:underline"
+                        >
+                            Forgot Password?
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

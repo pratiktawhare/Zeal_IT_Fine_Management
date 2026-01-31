@@ -1,61 +1,92 @@
-# Zeal IT Accounts
+# 🏫 College Fine Management System (ITSA Accounts)
 
-A comprehensive payment and fine management system for **Zeal College of Engineering and Research, IT Department**. Built with the MERN stack (MongoDB, Express.js, React, Node.js).
+A comprehensive **MERN stack** web application for managing student fees, fines, expenditures, and financial reporting for educational institutions.
 
 ![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
 ![React](https://img.shields.io/badge/React-v18+-blue)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
-## 📋 Features
+## 📋 Table of Contents
 
-### Core Features
-- **Student Management** - Upload student data via CSV files
-- **Payment Recording** - Record fines and fees with categories
-- **Receipt Generation** - Professional PDF receipts with download option
-- **Email Notifications** - Automatic receipt emails to students via Gmail SMTP
-- **Expenditure Tracking** - Track department expenses by category
-- **Dashboard Analytics** - Visual summary of income, expenditure, and balance
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Installation](#-installation)
+- [Environment Variables](#-environment-variables)
+- [API Endpoints](#-api-endpoints)
+- [Deployment](#-deployment)
+- [Screenshots](#-screenshots)
+- [Contributors](#-contributors)
 
-### Payment Features
-- Payment types: **Fine** or **Fee**
-- Custom payment categories (e.g., "Late Fine", "ITSA Committee Fees")
-- Auto-generated receipt numbers (e.g., `RCP-20260122-54321`)
-- All payments marked as paid automatically
-- Date & time tracking for each payment
+---
 
-### Administrative Features
-- Secure JWT-based authentication
-- Category management (CRUD operations)
-- Student search by PRN
-- Payment history per student
+## ✨ Features
+
+### 🔐 Authentication & Security
+- JWT-based authentication
+- First-time setup wizard
+- OTP-based password reset via email
+- Rate limiting protection against brute-force attacks
+- Secure password hashing with bcrypt
+
+### 👨‍🎓 Student Management
+- Add individual students or bulk upload via CSV
+- Search students by PRN, Name, or Roll Number
+- View complete student profile with payment history
+- Delete students individually or by class/division
+
+### 💰 Fee & Fine Management
+- **Fee Ledger System**: Create fee demands for entire classes
+- Track "Paid", "Partial", and "Pending" status
+- Auto-sync: Manual payments update corresponding ledgers
+- Multiple payment categories (Tuition, Library, Lab, etc.)
+- Support for both Fees and Fines
+
+### 📊 Financial Reports
+- **Transaction Report**: Daily income and expenditure tracking
+- Search transactions by Receipt Number, PRN, or Name
+- Download PDF receipts for any transaction
+- Class-wise and Category-wise summaries
+- Net Balance calculation (Income - Expenditure)
+
+### 💸 Expenditure Tracking
+- Log college expenses with categories
+- Attach receipt numbers and descriptions
+- View expenditure reports by date range
+
+### 📧 Email Notifications
+- Automatic email receipts on payment
+- OTP emails for password reset
+- Professional HTML email templates
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
-| Technology | Purpose |
-|------------|---------|
-| Node.js | Runtime environment |
-| Express.js | Web framework |
-| MongoDB | Database (Atlas supported) |
-| Mongoose | ODM for MongoDB |
-| JWT | Authentication |
-| Nodemailer | Email notifications |
-| Multer | CSV file uploads |
-
 ### Frontend
 | Technology | Purpose |
 |------------|---------|
-| React 18 | UI framework |
-| Vite | Build tool |
-| Tailwind CSS | Styling |
-| React Router | Navigation |
-| Axios | HTTP client |
-| React Icons | Icon library |
-| html2pdf.js | PDF generation |
+| React 18 | UI Framework |
+| Vite | Build Tool |
+| TailwindCSS | Styling |
+| React Router v6 | Navigation |
+| Axios | API Calls |
+| React Icons | Icons |
+| html2pdf.js | Receipt Generation |
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| Node.js | Runtime |
+| Express.js | Web Framework |
+| MongoDB | Database |
+| Mongoose | ODM |
+| JWT | Authentication |
+| Nodemailer | Email Service |
+| express-rate-limit | Security |
 
 ---
 
@@ -63,106 +94,97 @@ A comprehensive payment and fine management system for **Zeal College of Enginee
 
 ```
 internship/
-├── Internship-backend/          # Backend API
-│   ├── config/                  # Database configuration
-│   ├── controllers/             # Route handlers
-│   ├── middleware/              # Auth & error middleware
-│   ├── models/                  # Mongoose schemas
-│   ├── routes/                  # API routes
-│   ├── utils/                   # Email service
-│   ├── sample-data/             # Sample CSV file
-│   ├── server.js                # Entry point
-│   └── seeder.js                # Admin seeder
+├── frontend/                 # React Frontend
+│   ├── src/
+│   │   ├── components/       # Reusable UI components
+│   │   ├── context/          # React Context (Auth)
+│   │   ├── pages/            # Page components
+│   │   ├── services/         # API service layer
+│   │   └── App.jsx           # Main App component
+│   ├── public/
+│   └── package.json
 │
-└── frontend/                    # React frontend
-    ├── src/
-    │   ├── components/          # Reusable components
-    │   ├── context/             # Auth context
-    │   ├── pages/               # Page components
-    │   ├── services/            # API service
-    │   └── index.css            # Tailwind styles
-    └── index.html
+├── Internship-backend/       # Node.js Backend
+│   ├── config/               # Database configuration
+│   ├── controllers/          # Route handlers
+│   ├── middleware/           # Auth & Error handling
+│   ├── models/               # Mongoose schemas
+│   ├── routes/               # API routes
+│   ├── utils/                # Helper functions
+│   ├── server.js             # Entry point
+│   └── package.json
+│
+└── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## � Installation
 
 ### Prerequisites
 - Node.js v18+
-- MongoDB (local or Atlas)
-- npm or yarn
+- MongoDB Atlas account (or local MongoDB)
+- Gmail account for email notifications
 
-### Installation
-
-#### 1. Clone the repository
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/zeal-it-accounts.git
-cd zeal-it-accounts
+git clone https://github.com/your-username/college-fine-management.git
+cd college-fine-management
 ```
 
-#### 2. Backend Setup
+### 2. Backend Setup
 ```bash
 cd Internship-backend
-
-# Install dependencies
 npm install
 
-# Create environment file
+# Create .env file (see Environment Variables section)
 cp .env.example .env
 
-# Edit .env with your credentials
-# - MONGO_URI: Your MongoDB connection string
-# - JWT_SECRET: A secure random string
-# - EMAIL_USER: Your Gmail address
-# - EMAIL_PASS: Gmail App Password
-
-# Seed admin user
-npm run seed
-
 # Start development server
 npm run dev
 ```
 
-#### 3. Frontend Setup
+### 3. Frontend Setup
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
 
 # Start development server
 npm run dev
 ```
 
-#### 4. Access the Application
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5000
+### 4. Access the Application
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000/api
 
 ---
 
-## 🔐 Default Admin Credentials
+## 🔧 Environment Variables
 
-| Field | Value |
-|-------|-------|
-| Email | `admin@college.edu` |
-| Password | `Admin@123` |
-
-> ⚠️ **Change these credentials in production!**
-
----
-
-## 📧 Email Configuration
-
-To enable email notifications:
-
-1. Enable 2-Factor Authentication on your Google account
-2. Generate an App Password at: https://myaccount.google.com/apppasswords
-3. Update `.env` file:
+### Backend (`Internship-backend/.env`)
 ```env
+# Server
+PORT=5000
+NODE_ENV=development
+
+# Database
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+
+# Authentication
+JWT_SECRET=your_super_secret_jwt_key_here
+
+# Email Configuration (Gmail)
 EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-16-char-app-password
+EMAIL_PASS=your-app-password
 ```
+
+### Frontend (`frontend/.env`)
+```env
+# API URL (for production deployment)
+VITE_API_URL=https://your-backend-url.onrender.com/api
+```
+
+> **Note**: For Gmail, you need to create an [App Password](https://support.google.com/accounts/answer/185833) (not your regular password).
 
 ---
 
@@ -171,93 +193,85 @@ EMAIL_PASS=your-16-char-app-password
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/api/auth/setup-status` | Check if first-time setup required |
+| POST | `/api/auth/register` | Register first admin |
 | POST | `/api/auth/login` | Admin login |
-| GET | `/api/auth/me` | Get current admin |
+| GET | `/api/auth/profile` | Get admin profile |
+| POST | `/api/auth/forgot-password` | Request password reset OTP |
+| POST | `/api/auth/verify-otp` | Verify OTP |
+| POST | `/api/auth/reset-password` | Reset password |
 
 ### Students
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/students/upload-csv` | Upload student CSV |
-| GET | `/api/students/search/:prn` | Search by PRN |
-| GET | `/api/students/:prn` | Get student details |
-| POST | `/api/students/add-fine/:prn` | Add payment |
-| GET | `/api/students/:prn/fines` | Get payment history |
+| GET | `/api/students` | Get all students (paginated) |
+| GET | `/api/students/search` | Search students |
+| GET | `/api/students/:prn` | Get student by PRN |
+| POST | `/api/students/add` | Add new student |
+| POST | `/api/students/upload-csv` | Bulk upload via CSV |
+| POST | `/api/students/add-fine/:prn` | Add payment/fine |
+| DELETE | `/api/students/:prn` | Delete student |
 
-### Categories
+### Fee Ledger
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/categories` | Get all categories |
-| POST | `/api/categories` | Create category |
-| PUT | `/api/categories/:id` | Update category |
-| DELETE | `/api/categories/:id` | Delete category |
+| GET | `/api/fee-ledger` | Get all ledger entries |
+| POST | `/api/fee-ledger/generate` | Generate fee ledger for class |
+| POST | `/api/fee-ledger/:id/pay` | Record payment |
+| DELETE | `/api/fee-ledger/bulk-delete` | Bulk delete ledgers |
 
-### Expenditure
+### Reports
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/expenditure/summary` | Get financial summary |
-| POST | `/api/expenditure/add` | Add expenditure |
-| GET | `/api/expenditure` | Get all expenditures |
+| GET | `/api/reports/transactions` | Get all transactions |
+| GET | `/api/reports/student-payments` | Get student payment summary |
 
 ---
 
-## 📊 CSV Format
+## 🌍 Deployment
 
-Upload students using a CSV file with the following format:
+### Backend (Render)
+1. Create a new **Web Service** on [Render](https://render.com)
+2. Connect your GitHub repository
+3. Set **Root Directory** to `Internship-backend`
+4. Set **Build Command**: `npm install`
+5. Set **Start Command**: `npm start`
+6. Add all environment variables
+7. Deploy!
 
-```csv
-prn,name,department,email,phone
-122E10001,John Doe,Computer Science,john@example.com,9876543210
-122E10002,Jane Smith,Information Technology,jane@example.com,9876543211
-```
-
-A sample file is provided at `Internship-backend/sample-data/students-sample.csv`
-
----
-
-## 🎨 Screenshots
-
-### Dashboard
-- Overview of income, expenditure, and balance
-- Quick stats for total payments and students
-- Expenditure breakdown by category
-
-### Payment Receipt
-- Professional PDF receipt generation
-- Email notification with receipt attachment
-- Receipt number for tracking
+### Frontend (Vercel)
+1. Create a new **Project** on [Vercel](https://vercel.com)
+2. Import your GitHub repository
+3. Set **Root Directory** to `frontend`
+4. Add environment variable: `VITE_API_URL=https://your-backend.onrender.com/api`
+5. Deploy!
 
 ---
 
-## 🤝 Contributing
+## 📸 Screenshots
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+*Coming soon...*
 
 ---
 
-## 📄 License
+## 👥 Contributors
 
-**Proprietary Software - Internal Use Only**
-
-This software is developed exclusively for **Zeal College of Engineering and Research** (IT Department). Unauthorized copying, distribution, modification, or use of this file, via any medium, is strictly prohibited.
-
-All rights reserved.
+- **Pratik Tawhare** - [GitHub](https://github.com/pratiktawhare) | [Email](mailto:pratiktawhare3@gmail.com)
+- **Abhijeet Suryawanshi** - [GitHub](https://github.com/abhijeetsuryawanshi) | [Email](mailto:abhijeetsuryawanshi23@gmail.com)
 
 ---
 
-## 👨‍💻 Author
+## � License
 
-**Zeal College of Engineering and Research**  
-IT Department Accounts Management System
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- React Icons for the icon library
-- Tailwind CSS for styling
-- html2pdf.js for PDF generation
-- Nodemailer for email functionality
+- Built for ITSA (Information Technology Students Association)
+- Developed as an internship project
+
+---
+
+Made with ❤️ for educational institutions

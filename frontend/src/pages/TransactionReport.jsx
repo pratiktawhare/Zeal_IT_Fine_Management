@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { reportsAPI } from '../services/api';
+import { reportsAPI, studentsAPI } from '../services/api';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
+import ReceiptModal from '../components/ReceiptModal';
 import * as XLSX from 'xlsx-js-style';
 import html2pdf from 'html2pdf.js';
 import {
@@ -13,7 +14,10 @@ import {
     FiArrowUp,
     FiArrowDown,
     FiTrendingUp,
-    FiTrendingDown
+    FiTrendingDown,
+    FiSearch,
+    FiX,
+    FiFileText
 } from 'react-icons/fi';
 
 const TransactionReport = () => {
@@ -24,12 +28,53 @@ const TransactionReport = () => {
     const [pagination, setPagination] = useState({});
     const [filterOptions, setFilterOptions] = useState({ divisions: [], years: [] });
     const [showFilters, setShowFilters] = useState(false);
+    const [selectedReceipt, setSelectedReceipt] = useState(null);
 
     const [filters, setFilters] = useState({
         type: '', paymentType: '', category: '', year: '', month: '', division: '', studentClass: '',
-        fromDate: '', toDate: '', minAmount: '', maxAmount: '',
-        sortBy: 'date', sortOrder: 'desc', page: 1, limit: 10
+        fromDate: '', toDate: '', minAmount: '', maxAmount: '', search: '',
+        sortBy: 'date', sortOrder: 'desc', page: 1, limit: 100000
     });
+
+    // Search state with debounce
+    const [searchInput, setSearchInput] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [searchSuggestions, setSearchSuggestions] = useState([]);
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
+    // Debounce search input
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchInput);
+            if (searchInput.trim().length >= 2) {
+                fetchSearchSuggestions(searchInput);
+            } else {
+                setSearchSuggestions([]);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    const fetchSearchSuggestions = async (query) => {
+        try {
+            const response = await studentsAPI.search(query);
+            setSearchSuggestions(response.data.data);
+            setShowSearchDropdown(true);
+        } catch (err) {
+            console.error('Failed to fetch suggestions', err);
+        }
+    };
+
+    const handleSearchSelect = (student) => {
+        setSearchInput(student.prn);
+        setSearchSuggestions([]);
+        setShowSearchDropdown(false);
+    };
+
+    // Trigger fetch when debounced search changes
+    useEffect(() => {
+        setFilters(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
+    }, [debouncedSearch]);
 
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
@@ -44,7 +89,7 @@ const TransactionReport = () => {
 
     useEffect(() => {
         fetchTransactions();
-    }, [filters.page, filters.limit, filters.sortBy, filters.sortOrder]);
+    }, [filters]);
 
     const fetchTransactions = async () => {
         try {
@@ -88,9 +133,10 @@ const TransactionReport = () => {
     });
 
     const clearFilters = () => {
+        setSearchInput('');
         setFilters({
             type: '', paymentType: '', category: '', year: '', month: '', division: '', studentClass: '',
-            fromDate: '', toDate: '', minAmount: '', maxAmount: '',
+            fromDate: '', toDate: '', minAmount: '', maxAmount: '', search: '',
             sortBy: 'date', sortOrder: 'desc', page: 1, limit: 10
         });
         setTimeout(fetchTransactions, 100);
@@ -117,7 +163,7 @@ const TransactionReport = () => {
 
     const exportToExcel = async () => {
         try {
-            const params = { limit: 10000, page: 1 };
+            const params = { limit: 100000, page: 1 };
             Object.entries(filters).forEach(([key, value]) => {
                 if (value) params[key] = value;
             });
@@ -149,7 +195,7 @@ const TransactionReport = () => {
 
             const totalStyle = {
                 font: { bold: true },
-                fill: { fgColor: { rgb: "F2F2F2" } }, // Light Gray
+                fill: { fgColor: { rgb: "F2F2F2" } },
                 border: {
                     top: { style: "thin" },
                     bottom: { style: "thin" },
@@ -175,14 +221,17 @@ const TransactionReport = () => {
                 [{ v: "TRANSACTION DETAILS", s: { font: { bold: true, sz: 11 } } }],
                 [
                     { v: "Date & Time", s: headerStyle },
+                    { v: "Receipt No", s: headerStyle },
                     { v: "Type", s: headerStyle },
+                    { v: "Roll No", s: headerStyle },
                     { v: "PRN", s: headerStyle },
+                    { v: "Name", s: headerStyle },
                     { v: "Class", s: headerStyle },
                     { v: "Div", s: headerStyle },
                     { v: "Category", s: headerStyle },
                     { v: "Description", s: headerStyle },
                     { v: "Amount (₹)", s: headerStyle },
-                    { v: "Ref", s: headerStyle }
+                    { v: "Mode", s: headerStyle }
                 ]
             ];
 
@@ -190,20 +239,26 @@ const TransactionReport = () => {
             allData.forEach(t => {
                 wsData.push([
                     { v: formatDate(t.createdAt || t.date), s: cellStyle },
+                    { v: t.receiptNumber || '-', s: cellStyle },
                     { v: t.transactionType === 'income' ? 'Income' : 'Expenditure', s: { ...cellStyle, font: { color: { rgb: t.transactionType === 'income' ? "006400" : "FF0000" } } } },
+                    { v: t.studentRollNo || '-', s: cellStyle },
                     { v: t.studentPRN || '-', s: cellStyle },
+                    { v: t.studentName || '-', s: cellStyle },
                     { v: t.studentClass || '-', s: cellStyle },
                     { v: t.studentDivision || '-', s: cellStyle },
                     { v: t.category, s: cellStyle },
                     { v: t.description, s: cellStyle },
                     { v: t.amount, t: 'n', s: cellStyle },
-                    { v: t.paymentType ? t.paymentType.charAt(0).toUpperCase() + t.paymentType.slice(1) : '-', s: cellStyle }
+                    { v: t.paymentMode || t.paymentType || '-', s: cellStyle }
                 ]);
             });
 
             // Totals
             wsData.push([]);
             wsData.push([
+                { v: "", s: totalStyle },
+                { v: "", s: totalStyle },
+                { v: "", s: totalStyle },
                 { v: "", s: totalStyle },
                 { v: "", s: totalStyle },
                 { v: "", s: totalStyle },
@@ -221,6 +276,9 @@ const TransactionReport = () => {
                 { v: "", s: totalStyle },
                 { v: "", s: totalStyle },
                 { v: "", s: totalStyle },
+                { v: "", s: totalStyle },
+                { v: "", s: totalStyle },
+                { v: "", s: totalStyle },
                 { v: "TOTAL EXPENDITURE:", s: { ...totalStyle, alignment: { horizontal: "right" } } },
                 { v: totals.totalExpenditure, t: 'n', s: totalStyle },
                 { v: "", s: totalStyle }
@@ -230,15 +288,18 @@ const TransactionReport = () => {
             XLSX.utils.sheet_add_aoa(worksheet, wsData, { origin: "A1" });
 
             worksheet['!cols'] = [
-                { wch: 22 }, // Date & Time
+                { wch: 22 }, // Date
+                { wch: 15 }, // Receipt
                 { wch: 12 }, // Type
+                { wch: 10 }, // Roll
                 { wch: 15 }, // PRN
+                { wch: 25 }, // Name
                 { wch: 10 }, // Class
-                { wch: 10 }, // Div
+                { wch: 8 },  // Div
                 { wch: 15 }, // Category
-                { wch: 35 }, // Description
+                { wch: 30 }, // Description
                 { wch: 15 }, // Amount
-                { wch: 12 }  // Ref/Payment Type
+                { wch: 12 }  // Mode
             ];
 
             const workbook = XLSX.utils.book_new();
@@ -252,7 +313,7 @@ const TransactionReport = () => {
 
     const exportToPDF = async () => {
         try {
-            const params = { limit: 10000, page: 1 };
+            const params = { limit: 100000, page: 1 };
             Object.entries(filters).forEach(([key, value]) => {
                 if (value) params[key] = value;
             });
@@ -261,96 +322,107 @@ const TransactionReport = () => {
             const totals = response.data.data.summary;
 
             const pdfContent = document.createElement('div');
-            pdfContent.style.fontFamily = 'Arial, sans-serif';
-            pdfContent.style.padding = '20px';
+            pdfContent.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+            pdfContent.style.padding = '15px';
             pdfContent.style.color = '#333';
-            pdfContent.style.width = '190mm'; // Force A4 portrait width (210mm - margins)
+            pdfContent.style.width = '190mm'; // A4 Portrait width (210mm - margins)
 
             pdfContent.innerHTML = `
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="margin: 0; color: #1a365d; font-size: 24px;">INFORMATION TECHNOLOGY STUDENT ASSOCIATION (ITSA)</h1>
-                    <h2 style="margin: 10px 0; color: #2d3748; font-size: 18px;">TRANSACTION REPORT</h2>
-                    <p style="margin: 5px 0; color: #718096; font-size: 12px;">Period: ${getReportPeriod()}</p>
-                    <p style="margin: 5px 0; color: #718096; font-size: 11px;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="margin: 0; color: #1a365d; font-size: 20px; font-weight: bold;">INFORMATION TECHNOLOGY STUDENT ASSOCIATION (ITSA)</h1>
+                    <h2 style="margin: 5px 0; color: #2d3748; font-size: 16px;">TRANSACTION REPORT</h2>
+                    <p style="margin: 5px 0; color: #718096; font-size: 11px;">Period: ${getReportPeriod()}</p>
+                    <p style="margin: 2px 0; color: #718096; font-size: 10px;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; background: #f7fafc; padding: 15px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
                     <div style="text-align: center; flex: 1;">
-                        <p style="margin: 0; color: #718096; font-size: 12px;">Total Income</p>
-                        <p style="margin: 5px 0; font-size: 18px; font-weight: bold; color: #38a169;">${formatCurrency(totals.totalIncome)}</p>
+                        <p style="margin: 0; color: #718096; font-size: 10px; text-transform: uppercase;">Total Income</p>
+                        <p style="margin: 2px 0; font-size: 16px; font-weight: bold; color: #047857;">${formatCurrency(totals.totalIncome)}</p>
+                    </div>
+                    <div style="text-align: center; flex: 1; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+                        <p style="margin: 0; color: #718096; font-size: 10px; text-transform: uppercase;">Total Expenditure</p>
+                        <p style="margin: 2px 0; font-size: 16px; font-weight: bold; color: #dc2626;">${formatCurrency(totals.totalExpenditure)}</p>
                     </div>
                     <div style="text-align: center; flex: 1;">
-                        <p style="margin: 0; color: #718096; font-size: 12px;">Total Expenditure</p>
-                        <p style="margin: 5px 0; font-size: 18px; font-weight: bold; color: #e53e3e;">${formatCurrency(totals.totalExpenditure)}</p>
-                    </div>
-                    <div style="text-align: center; flex: 1;">
-                        <p style="margin: 0; color: #718096; font-size: 12px;">Net Balance</p>
-                        <p style="margin: 5px 0; font-size: 18px; font-weight: bold; color: ${totals.netBalance >= 0 ? '#3182ce' : '#dd6b20'};">${formatCurrency(totals.netBalance)}</p>
+                        <p style="margin: 0; color: #718096; font-size: 10px; text-transform: uppercase;">Net Balance</p>
+                        <p style="margin: 2px 0; font-size: 16px; font-weight: bold; color: ${totals.netBalance >= 0 ? '#2563eb' : '#d97706'};">${formatCurrency(totals.netBalance)}</p>
                     </div>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 8px;">
                     <thead>
-                        <tr style="background: #edf2f7;">
-                            <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e0;">Date & Time</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e0;">Type</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e0;">PRN</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e0;">Class</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e0;">Division</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e0;">Category</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 2px solid #cbd5e0;">Description</th>
-                            <th style="padding: 8px; text-align: right; border-bottom: 2px solid #cbd5e0;">Amount</th>
+                        <tr style="background: #f1f5f9;">
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">Date</th>
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">Receipt</th>
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">Type</th>
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">Roll</th>
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">PRN</th>
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">Name</th>
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">Category</th>
+                            <th style="padding: 6px 4px; text-align: right; border-bottom: 1px solid #cbd5e0;">Amount</th>
+                            <th style="padding: 6px 4px; text-align: left; border-bottom: 1px solid #cbd5e0;">Mode</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${allData.map(t => `
-                            <tr>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0;">${formatDate(t.createdAt || t.date)}</td>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0;">
-                                    <span style="display: inline-block; white-space: nowrap; padding: 2px 6px; border-radius: 4px; font-size: 9px; background: ${t.transactionType === 'income' ? '#c6f6d5' : '#fed7d7'}; color: ${t.transactionType === 'income' ? '#22543d' : '#742a2a'};">
-                                        ${t.transactionType === 'income' ? 'Income' : 'Expense'}
+                        ${allData.map((t, idx) => `
+                            <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; page-break-inside: avoid;">
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">${formatDate(t.createdAt || t.date)}</td>
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0;">${t.receiptNumber || '-'}</td>
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0;">
+                                    <span style="font-weight: 600; color: ${t.transactionType === 'income' ? '#047857' : '#dc2626'};">
+                                        ${t.transactionType === 'income' ? 'Inc' : 'Exp'}
                                     </span>
                                 </td>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0;">${t.studentPRN || '-'}</td>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0;">${t.studentClass || '-'}</td>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0;">${t.studentDivision || '-'}</td>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-transform: capitalize;">${t.category || '-'}</td>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0;">${t.description || '-'}</td>
-                                <td style="padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 500; color: ${t.transactionType === 'income' ? '#38a169' : '#e53e3e'};">
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0;">${t.studentRollNo || '-'}</td>
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; font-family: monospace;">${t.studentPRN || '-'}</td>
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.studentName || '-'}</td>
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.category || '-'}</td>
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: ${t.transactionType === 'income' ? '#059669' : '#e11d48'};">
                                     ${t.transactionType === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
                                 </td>
+                                <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-transform: capitalize;">${t.paymentMode || t.paymentType || '-'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
 
-                <div style="margin-top: 20px; background: #f7fafc; padding: 15px; border-radius: 8px;">
-                    <table style="width: 100%; font-size: 12px;">
-                        <tr>
-                            <td style="font-weight: bold;">Summary</td>
-                            <td style="text-align: right; color: #38a169; font-weight: bold;">Income: ${formatCurrency(totals.totalIncome)}</td>
-                            <td style="text-align: right; color: #e53e3e; font-weight: bold;">Expenditure: ${formatCurrency(totals.totalExpenditure)}</td>
-                            <td style="text-align: right; color: ${totals.netBalance >= 0 ? '#3182ce' : '#dd6b20'}; font-weight: bold;">Balance: ${formatCurrency(totals.netBalance)}</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #a0aec0; text-align: center;">
-                    <p>This is a computer-generated report. No signature required.</p>
-                    <p>Zeal Institute of Technology - Accounts Department</p>
+                <div style="margin-top: 20px; border-top: 1px solid #cbd5e0; padding-top: 10px; display: flex; justify-content: space-between; font-size: 8px; color: #718096;">
+                    <span>Zeal Institute of Technology - Accounts Department</span>
+                    <span>Computed Report</span>
                 </div>
             `;
 
             html2pdf().set({
-                margin: [10, 10, 10, 10],
+                margin: 10,
                 filename: `Transaction_Report_${new Date().toISOString().split('T')[0]}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).from(pdfContent).save();
         } catch (err) {
+            console.error(err);
             setError('Failed to export to PDF');
         }
+    };
+
+
+
+    const handleViewReceipt = (transaction) => {
+        setSelectedReceipt({
+            payment: {
+                ...transaction,
+                type: transaction.type || 'fee', // Default to fee if not specified
+                date: transaction.createdAt || transaction.date
+            },
+            student: {
+                name: transaction.studentName,
+                prn: transaction.studentPRN,
+                division: transaction.studentDivision,
+                rollNo: transaction.studentRollNo,
+                department: transaction.studentDepartment // Ensure backend sends this or fallback
+            }
+        });
     };
 
     return (
@@ -378,6 +450,55 @@ const TransactionReport = () => {
                         className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
                         <FiDownload /> PDF
                     </button>
+                </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 relative">
+                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by PRN, Roll No, Name or Receipt No..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onFocus={() => {
+                                if (searchInput.trim().length >= 2) setShowSearchDropdown(true);
+                            }}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        />
+                        {/* Autocomplete Dropdown */}
+                        {showSearchDropdown && searchSuggestions.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-100 max-h-60 overflow-y-auto z-50">
+                                <ul>
+                                    {searchSuggestions.map((s) => (
+                                        <li
+                                            key={s.prn}
+                                            onClick={() => handleSearchSelect(s)}
+                                            className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0"
+                                        >
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                                                    <p className="text-xs text-primary-600 font-mono">{s.prn}</p>
+                                                </div>
+                                                <div className="text-right text-xs text-gray-500">
+                                                    <p className="font-mono">{s.rollNo || '-'}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                    {(searchInput || filters.type || filters.paymentType || filters.category) && (
+                        <button onClick={clearFilters}
+                            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                            <FiX /> Clear
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -533,46 +654,60 @@ const TransactionReport = () => {
                                             Date & Time {filters.sortBy === 'date' && (filters.sortOrder === 'desc' ? <FiArrowDown /> : <FiArrowUp />)}
                                         </div>
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase cursor-pointer"
+                                        onClick={() => handleSort('rollNo')}>
+                                        <div className="flex items-center gap-1">
+                                            Roll No {filters.sortBy === 'rollNo' && (filters.sortOrder === 'desc' ? <FiArrowDown /> : <FiArrowUp />)}
+                                        </div>
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Receipt No</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Student PRN</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Class</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Division</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Name</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Category</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Description</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase cursor-pointer"
                                         onClick={() => handleSort('amount')}>
                                         <div className="flex items-center justify-end gap-1">
                                             Amount {filters.sortBy === 'amount' && (filters.sortOrder === 'desc' ? <FiArrowDown /> : <FiArrowUp />)}
                                         </div>
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Payment</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Payment Mode</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Receipt</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {transactions.length === 0 ? (
-                                    <tr><td colSpan="7" className="px-4 py-12 text-center text-gray-500">No transactions found</td></tr>
+                                    <tr><td colSpan="9" className="px-4 py-12 text-center text-gray-500">No transactions found</td></tr>
                                 ) : (
                                     transactions.map((t, idx) => (
                                         <tr key={idx} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 text-sm text-gray-700">{formatDate(t.createdAt || t.date)}</td>
-                                            <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${t.transactionType === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                    {t.transactionType === 'income' ? 'Income' : 'Expenditure'}
-                                                </span>
+                                            <td className="px-4 py-3 text-sm text-gray-700">{t.studentRollNo || '-'}</td>
+                                            <td className="px-4 py-3 text-sm text-gray-600 font-mono text-xs">
+                                                {t.receiptNumber ? (
+                                                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200">
+                                                        {t.receiptNumber}
+                                                    </span>
+                                                ) : '-'}
                                             </td>
                                             <td className="px-4 py-3 text-sm">
                                                 {t.studentPRN ? (
                                                     <Link to={`/student/${t.studentPRN}`} className="text-primary-600 hover:underline">{t.studentPRN}</Link>
                                                 ) : '-'}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-gray-700">{t.studentClass || '-'}</td>
-                                            <td className="px-4 py-3 text-sm text-gray-700">{t.studentDivision || '-'}</td>
+                                            <td className="px-4 py-3 text-sm text-gray-800 font-medium">{t.studentName || '-'}</td>
                                             <td className="px-4 py-3 text-sm text-gray-600 capitalize">{t.category || '-'}</td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{t.description || '-'}</td>
                                             <td className={`px-4 py-3 text-sm text-right font-semibold ${t.transactionType === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                                                 {t.transactionType === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 capitalize">{t.paymentType || '-'}</td>
+                                            <td className="px-4 py-3 text-sm text-gray-600 capitalize">{t.paymentMode || t.paymentType || '-'}</td>
+                                            <td className="px-4 py-3 text-sm text-center">
+                                                {t.transactionType === 'income' && t.receiptNumber && (
+                                                    <button onClick={() => handleViewReceipt(t)} title="View Receipt"
+                                                        className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-full transition-colors">
+                                                        <FiFileText size={18} />
+                                                    </button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -580,29 +715,17 @@ const TransactionReport = () => {
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    <div className="flex items-center justify-between px-4 py-4 border-t border-gray-100">
-                        <select value={filters.limit} onChange={(e) => setFilters(prev => ({ ...prev, limit: e.target.value, page: 1 }))}
-                            className="px-2 py-1 border rounded text-sm">
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                        </select>
-                        <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-600">Page {pagination.currentPage} of {pagination.totalPages}</span>
-                            <div className="flex gap-2">
-                                <button onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
-                                    disabled={!pagination.hasPrevPage} className="p-2 rounded border disabled:opacity-50">
-                                    <FiChevronLeft />
-                                </button>
-                                <button onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
-                                    disabled={!pagination.hasNextPage} className="p-2 rounded border disabled:opacity-50">
-                                    <FiChevronRight />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Pagination Removed */}
                 </div>
+            )}
+            {/* Receipt Modal */}
+            {selectedReceipt && (
+                <ReceiptModal
+                    isOpen={!!selectedReceipt}
+                    onClose={() => setSelectedReceipt(null)}
+                    payment={selectedReceipt.payment}
+                    student={selectedReceipt.student}
+                />
             )}
         </div>
     );

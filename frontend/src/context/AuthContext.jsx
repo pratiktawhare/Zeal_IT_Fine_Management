@@ -15,16 +15,51 @@ export const AuthProvider = ({ children }) => {
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [setupRequired, setSetupRequired] = useState(false);
+    const [adminEmail, setAdminEmail] = useState('');
 
-    // Check for existing token on mount
+    // Check setup status and existing token on mount
     useEffect(() => {
-        const token = localStorage.getItem('adminToken');
-        if (token) {
-            validateToken();
-        } else {
+        checkInitialState();
+    }, []);
+
+    // Check if setup is needed and validate existing token
+    const checkInitialState = async () => {
+        try {
+            // First check setup status
+            const setupResponse = await authAPI.checkSetupStatus();
+            const { setupRequired: needsSetup, adminEmail: email } = setupResponse.data.data;
+
+            setSetupRequired(needsSetup);
+            setAdminEmail(email || '');
+
+            // If setup is not required, validate existing token
+            if (!needsSetup) {
+                const token = localStorage.getItem('adminToken');
+                if (token) {
+                    await validateToken();
+                }
+            }
+        } catch (err) {
+            console.error('Failed to check setup status:', err);
+        } finally {
             setLoading(false);
         }
-    }, []);
+    };
+
+    // Check setup status (can be called manually)
+    const checkSetupStatus = async () => {
+        try {
+            const response = await authAPI.checkSetupStatus();
+            const { setupRequired: needsSetup, adminEmail: email } = response.data.data;
+            setSetupRequired(needsSetup);
+            setAdminEmail(email || '');
+            return { setupRequired: needsSetup, adminEmail: email };
+        } catch (err) {
+            console.error('Failed to check setup status:', err);
+            return { setupRequired: false, adminEmail: '' };
+        }
+    };
 
     // Validate existing token
     const validateToken = async () => {
@@ -34,8 +69,6 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             localStorage.removeItem('adminToken');
             setAdmin(null);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -58,6 +91,25 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // Register first admin function
+    const registerAdmin = async (password, name) => {
+        try {
+            setError(null);
+            const response = await authAPI.register({ password, name });
+            const { token, id, email, name: adminName } = response.data.data;
+
+            localStorage.setItem('adminToken', token);
+            setAdmin({ id, email, name: adminName });
+            setSetupRequired(false);
+
+            return { success: true };
+        } catch (err) {
+            const message = err.response?.data?.message || 'Registration failed. Please try again.';
+            setError(message);
+            return { success: false, error: message };
+        }
+    };
+
     // Logout function
     const logout = () => {
         localStorage.removeItem('adminToken');
@@ -73,10 +125,14 @@ export const AuthProvider = ({ children }) => {
         admin,
         loading,
         error,
+        setupRequired,
+        adminEmail,
         login,
         logout,
         isAuthenticated,
         setError,
+        checkSetupStatus,
+        registerAdmin,
     };
 
     return (
@@ -87,3 +143,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthContext;
+

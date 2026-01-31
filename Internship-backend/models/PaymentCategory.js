@@ -25,6 +25,25 @@ const paymentCategorySchema = new mongoose.Schema({
         default: 'fine'
     },
 
+    // Default fee/fine amount
+    amount: {
+        type: Number,
+        default: 0,
+        min: [0, 'Amount cannot be negative']
+    },
+
+    // Classes this category applies to (for auto-generating ledger entries)
+    applicableClasses: [{
+        type: String,
+        trim: true
+    }],
+
+    // Whether to auto-assign to all students in applicable classes
+    isAutoAssign: {
+        type: Boolean,
+        default: false
+    },
+
     // Description (optional)
     description: {
         type: String,
@@ -45,3 +64,4 @@ const paymentCategorySchema = new mongoose.Schema({
 const PaymentCategory = mongoose.model('PaymentCategory', paymentCategorySchema);
 
 module.exports = PaymentCategory;
+

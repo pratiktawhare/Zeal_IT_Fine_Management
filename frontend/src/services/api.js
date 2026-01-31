@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: import.meta.env.VITE_API_URL || '/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -40,10 +40,15 @@ api.interceptors.response.use(
 // ============================================
 
 export const authAPI = {
+    checkSetupStatus: () => api.get('/auth/setup-status'),
     login: (credentials) => api.post('/auth/login', credentials),
     register: (data) => api.post('/auth/register', data),
     getProfile: () => api.get('/auth/profile'),
     changePassword: (data) => api.put('/auth/change-password', data),
+    updateProfile: (data) => api.put('/auth/update-profile', data),
+    forgotPassword: () => api.post('/auth/forgot-password'),
+    verifyOtp: (otp) => api.post('/auth/verify-otp', { otp }),
+    resetPassword: (newPassword) => api.post('/auth/reset-password', { newPassword }),
 };
 
 // ============================================
@@ -99,6 +104,21 @@ export const categoryAPI = {
 export const reportsAPI = {
     getStudentPayments: (params) => api.get('/reports/student-payments', { params }),
     getTransactions: (params) => api.get('/reports/transactions', { params }),
+};
+
+// ============================================
+// Fee Ledger API
+// ============================================
+
+export const feeLedgerAPI = {
+    getEntries: (params) => api.get('/fee-ledger', { params }),
+    getClassSummary: (params) => api.get('/fee-ledger/class-summary', { params }),
+    getEntry: (id) => api.get(`/fee-ledger/${id}`),
+    addPayment: (id, data) => api.post(`/fee-ledger/${id}/pay`, data),
+    generate: (data) => api.post('/fee-ledger/generate', data),
+    delete: (id) => api.delete(`/fee-ledger/${id}`),
+    bulkDelete: (data) => api.delete('/fee-ledger/bulk-delete', { data }),
+    getDeletableOptions: () => api.get('/fee-ledger/deletable-options'),
 };
 
 // ============================================

@@ -9,6 +9,8 @@
 const fs = require('fs');
 const csv = require('csv-parser');
 const Student = require('../models/Student');
+const FeeLedger = require('../models/FeeLedger');
+const PaymentCategory = require('../models/PaymentCategory');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { sendPaymentReceiptEmail } = require('../utils/emailService');
 
@@ -36,32 +38,9 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
     let updateCount = 0;
     let errorCount = 0;
 
-    // Read the file content to detect the header row
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const lines = fileContent.split(/\r?\n/).filter(line => line.trim());
-
-    // Find the row that contains actual headers (must have "PRN" in it)
-    let headerRowIndex = 0;
-    for (let i = 0; i < Math.min(5, lines.length); i++) {
-        const lineLower = lines[i].toLowerCase();
-        if (lineLower.includes('prn') && (lineLower.includes('name') || lineLower.includes('student'))) {
-            headerRowIndex = i;
-            console.log(`Found header row at line ${i + 1}: ${lines[i].substring(0, 100)}...`);
-            break;
-        }
-    }
-
-    // Create modified CSV content starting from the header row
-    const modifiedContent = lines.slice(headerRowIndex).join('\n');
-
-    // Create a promise to handle CSV parsing from the modified content
+    // Create a promise to handle CSV parsing directly from file stream
     const parseCSV = new Promise((resolve, reject) => {
-        const stream = require('stream');
-        const readable = new stream.Readable();
-        readable.push(modifiedContent);
-        readable.push(null);
-
-        readable
+        fs.createReadStream(filePath)
             .pipe(csv({
                 // Handle different header variations - normalize to lowercase and remove special chars
                 mapHeaders: ({ header }) => header.trim().toLowerCase().replace(/[.\s]+/g, ' ').trim()
@@ -341,6 +320,48 @@ const addFineToStudent = asyncHandler(async (req, res) => {
 
     student.fines.push(newPayment);
     await student.save();
+
+    // =========================================================
+    // SYNC WITH FEE LEDGER (Fix for Dual Source of Truth)
+    // =========================================================
+    try {
+        // Find if there's a matching ledger for this student and category
+        // We need the category ID, but fine.category is usually a name string like "Tuition Fee"
+        const categoryDoc = await PaymentCategory.findOne({ name: { $regex: new RegExp(`^${category}$`, 'i') } });
+
+        if (categoryDoc) {
+            // Find active ledger for this student, category, and current academic year (if applicable)
+            // If the manual payment doesn't specify year, we might check the student's current year
+            // For now, finding the most recent active ledger for this category
+            const ledger = await FeeLedger.findOne({
+                student: student._id,
+                category: categoryDoc._id,
+                isActive: true
+            }).sort({ createdAt: -1 });
+
+            if (ledger) {
+                // Determine payment mode
+                const mode = 'cash'; // Defaulting to cash for manual entry if not specified
+
+                // Add payment to ledger
+                ledger.payments.push({
+                    amount: Number(amount),
+                    date: date ? new Date(date) : new Date(),
+                    paymentMode: mode,
+                    receiptNumber: receiptNumber,
+                    remarks: reason || 'Manual payment synced from student profile'
+                });
+
+                // Save triggers the pre-save hook which updates paidAmount and status
+                await ledger.save();
+                console.log(`Synced payment of ${amount} to FeeLedger ${ledger._id}`);
+            }
+        }
+    } catch (syncError) {
+        console.error('Error syncing with FeeLedger:', syncError);
+        // We don't fail the request if sync fails, just log it
+    }
+    // =========================================================
 
     // Get the saved payment with _id
     const savedPayment = student.fines[student.fines.length - 1];

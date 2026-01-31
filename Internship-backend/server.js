@@ -62,6 +62,9 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 // Report routes (new)
 app.use('/api/reports', require('./routes/reportRoutes'));
 
+// Fee Ledger routes
+app.use('/api/fee-ledger', require('./routes/feeLedgerRoutes'));
+
 // ===========================================
 // Error Handling Middleware
 // ===========================================

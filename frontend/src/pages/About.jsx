@@ -24,7 +24,7 @@ const TeamMemberCard = ({ name, image, github, email, linkedin }) => (
                     </a>
                 )}
                 {email && (
-                    <a href={`mailto:${email}`} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                    <a href={`https://mail.google.com/mail/?view=cm&fs=1&to=${email}`} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
                         <FiMail className="w-5 h-5" />
                     </a>
                 )}
@@ -44,7 +44,7 @@ const About = () => {
             name: "Pratik Tawhare",
             image: "/images/Pratik.jpeg",
             github: "https://github.com/pratiktawhare",
-            email: "pratiktawhare3gmail.com",
+            email: "pratiktawhare3@gmail.com",
             linkedin: "https://www.linkedin.com/in/pratik-tawhare"
         },
         {
@@ -52,7 +52,7 @@ const About = () => {
             name: "Aary Thasal",
             image: "/images/Aary.jpeg",
             github: "https://github.com/AaryThasal",
-            email: "thasalaary@gmail.com",
+            email: "aarythasal1@gmail.com",
             linkedin: "https://www.linkedin.com/in/aary-thasal-9255392a7"
         },
         {
@@ -99,9 +99,9 @@ const About = () => {
             id: 8,
             name: "Abhijeet Suryawanshi",
             image: "/images/abhijeet.jpeg",
-            github: "https://github.com/",
-            email: "abhijeetsuryawnshi23@gmail.com",
-            linkedin: "www.linkedin.com/in/abhijeet-suryawanshi-21a587294"
+            github: "https://github.com/Abhijeet-dev07",
+            email: "abhijeetsuryawanshi23@gmail.com",
+            linkedin: "https://www.linkedin.com/in/abhijeet-suryawanshi-21a587294"
         }
 
     ];

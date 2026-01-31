@@ -150,6 +150,7 @@ const StudentDetails = () => {
                         </div>
                         <Link
                             to={`/add-payment/${prn}`}
+                            state={{ source: 'details' }}
                             className="inline-flex items-center justify-center space-x-2 px-6 py-3 
                          bg-amber-500 text-white font-medium rounded-lg 
                          hover:bg-amber-400 transition-colors"

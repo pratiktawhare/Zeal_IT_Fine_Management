@@ -143,7 +143,7 @@ const SearchStudent = () => {
 
     const handleAddPayment = () => {
         if (student) {
-            navigate(`/add-payment/${student.prn}`);
+            navigate(`/add-payment/${student.prn}`, { state: { source: 'search' } });
         }
     };
 
