@@ -1,6 +1,6 @@
-# 🏫 College Fine Management System (ITSA Accounts)
+# 🏫 ITSA Accounts - Student Finance Management System
 
-A comprehensive **MERN stack** web application for managing student fees, fines, expenditures, and financial reporting for educational institutions.
+A comprehensive **MERN stack** web application for managing student fees, fines, expenditures, fee ledgers, and complete financial reporting for educational institutions.
 
 ![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
 ![React](https://img.shields.io/badge/React-v18+-blue)
