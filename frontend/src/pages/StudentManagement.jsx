@@ -14,7 +14,8 @@ import {
     FiX,
     FiAlertTriangle,
     FiArrowUp,
-    FiArrowDown
+    FiArrowDown,
+    FiUpload
 } from 'react-icons/fi';
 import { BiRupee } from 'react-icons/bi';
 
@@ -165,6 +166,10 @@ const StudentManagement = () => {
                     <h1 className="text-2xl font-bold text-gray-800">Student Management</h1>
                 </div>
                 <div className="flex gap-2 flex-wrap">
+                    <Link to="/upload"
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                        <FiUpload /> Upload CSV
+                    </Link>
                     <button onClick={() => setShowFilters(!showFilters)}
                         className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                         <FiFilter /> Filters

@@ -1,11 +1,12 @@
-prn,name,department,email,phone
-PRN2024001,Rahul Sharma,Computer Science,rahul.sharma@college.edu,9876543210
-PRN2024002,Priya Patel,Information Technology,priya.patel@college.edu,9876543211
-PRN2024003,Amit Kumar,Electronics,amit.kumar@college.edu,9876543212
-PRN2024004,Sneha Gupta,Computer Science,sneha.gupta@college.edu,9876543213
-PRN2024005,Vikram Singh,Mechanical Engineering,vikram.singh@college.edu,9876543214
-PRN2024006,Neha Verma,Electrical Engineering,neha.verma@college.edu,9876543215
-PRN2024007,Rohan Deshmukh,Civil Engineering,rohan.deshmukh@college.edu,9876543216
-PRN2024008,Ananya Iyer,Computer Science,ananya.iyer@college.edu,9876543217
-PRN2024009,Karan Mehta,Information Technology,karan.mehta@college.edu,9876543218
-PRN2024010,Pooja Joshi,Electronics,pooja.joshi@college.edu,9876543219
+Student Guardian List
+Sr No.,Academic Year,Semester,Year,Division,Roll No,PRN Number,Student Name,Mobile Number,Email Id
+1,2024-25,VI,TE,A,101,PRN2024001,Rahul Sharma,9876543210,rahul.sharma@college.edu
+2,2024-25,VI,TE,A,102,PRN2024002,Priya Patel,9876543211,priya.patel@college.edu
+3,2024-25,VI,TE,B,103,PRN2024003,Amit Kumar,9876543212,amit.kumar@college.edu
+4,2024-25,VI,TE,B,104,PRN2024004,Sneha Gupta,9876543213,sneha.gupta@college.edu
+5,2024-25,IV,SE,A,201,PRN2024005,Vikram Singh,9876543214,vikram.singh@college.edu
+6,2024-25,IV,SE,A,202,PRN2024006,Neha Verma,9876543215,neha.verma@college.edu
+7,2024-25,IV,SE,B,203,PRN2024007,Rohan Deshmukh,9876543216,rohan.deshmukh@college.edu
+8,2024-25,II,FE,A,301,PRN2024008,Ananya Iyer,9876543217,ananya.iyer@college.edu
+9,2024-25,II,FE,A,302,PRN2024009,Karan Mehta,9876543218,karan.mehta@college.edu
+10,2024-25,II,FE,B,303,PRN2024010,Pooja Joshi,9876543219,pooja.joshi@college.edu

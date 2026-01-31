@@ -15,7 +15,8 @@ const {
     getLedgerEntry,
     deleteLedgerEntry,
     bulkDeleteLedgerEntries,
-    getDeletableOptions
+    getDeletableOptions,
+    getStudentLedgers
 } = require('../controllers/feeLedgerController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -95,5 +96,12 @@ router.post('/:id/pay', addPayment);
  * @access  Private
  */
 router.delete('/:id', deleteLedgerEntry);
+
+/**
+ * @route   GET /api/fee-ledger/student/:prn
+ * @desc    Get all ledger entries for a specific student
+ * @access  Private
+ */
+router.get('/student/:prn', getStudentLedgers);
 
 module.exports = router;

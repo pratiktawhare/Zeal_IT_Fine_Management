@@ -39,8 +39,30 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
     let errorCount = 0;
 
     // Create a promise to handle CSV parsing directly from file stream
+    // First, read the file and find the actual header row (skip title rows like "Student Guardian List")
     const parseCSV = new Promise((resolve, reject) => {
-        fs.createReadStream(filePath)
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const lines = fileContent.split(/\r?\n/);
+
+        // Find the header row - look for a row that contains PRN-related columns
+        let headerRowIndex = 0;
+        for (let i = 0; i < Math.min(lines.length, 5); i++) {
+            const line = lines[i].toLowerCase();
+            // Check if this line looks like a header row (contains PRN or Student Name)
+            if (line.includes('prn') || line.includes('student name') || line.includes('roll no')) {
+                headerRowIndex = i;
+                break;
+            }
+        }
+
+        // Skip title rows and create new CSV content starting from the header row
+        const csvContent = lines.slice(headerRowIndex).join('\n');
+
+        // Parse the cleaned CSV content
+        const Readable = require('stream').Readable;
+        const stream = Readable.from([csvContent]);
+
+        stream
             .pipe(csv({
                 // Handle different header variations - normalize to lowercase and remove special chars
                 mapHeaders: ({ header }) => header.trim().toLowerCase().replace(/[.\s]+/g, ' ').trim()
@@ -66,19 +88,44 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
             console.log('First row data:', results[0]);
         }
 
-        // Helper function to find value by partial key match
+        // Helper function to find value by key match
+        // Priority: 1. Exact match, 2. Key starts with rowKey, 3. rowKey starts with key
+        // Requires minimum match length to prevent false positives
         const getValue = (row, ...possibleKeys) => {
+            const rowKeys = Object.keys(row);
+
             for (const key of possibleKeys) {
-                // Try exact match first
-                if (row[key] !== undefined) return row[key]?.trim();
-                // Try partial match
-                const rowKeys = Object.keys(row);
+                // 1. Try exact match first (highest priority)
+                if (row[key] !== undefined && row[key] !== '') {
+                    return row[key]?.toString().trim();
+                }
+
+                // 2. Try finding column that exactly matches one of our keys
                 for (const rowKey of rowKeys) {
-                    if (rowKey.includes(key) || key.includes(rowKey)) {
-                        return row[rowKey]?.trim();
+                    if (rowKey === key && row[rowKey] !== undefined && row[rowKey] !== '') {
+                        return row[rowKey]?.toString().trim();
                     }
                 }
             }
+
+            // 3. Only if exact match failed, try partial matching but with stricter rules
+            for (const key of possibleKeys) {
+                for (const rowKey of rowKeys) {
+                    // The row key must START with our search key (e.g., "division" matches "division_code")
+                    // OR the search key must START with row key (e.g., searching "prn number" matches "prn")
+                    // But the match must be at least 3 characters to avoid false positives
+                    const keyLower = key.toLowerCase();
+                    const rowKeyLower = rowKey.toLowerCase();
+
+                    const matchesStart = rowKeyLower.startsWith(keyLower) || keyLower.startsWith(rowKeyLower);
+                    const minMatchLength = Math.min(keyLower.length, rowKeyLower.length);
+
+                    if (matchesStart && minMatchLength >= 3 && row[rowKey] !== undefined && row[rowKey] !== '') {
+                        return row[rowKey]?.toString().trim();
+                    }
+                }
+            }
+
             return undefined;
         };
 
@@ -776,13 +823,16 @@ const getAllStudentsAdvanced = asyncHandler(async (req, res) => {
         }
     ]);
 
+    // Filter out invalid values (like emails containing @)
+    const isValid = (val) => val && typeof val === 'string' && !val.includes('@') && val.length < 50;
+
     res.status(200).json({
         success: true,
         data: {
             students,
             filterOptions: filterOptions.length > 0 ? {
-                years: filterOptions[0].years.filter(y => y).sort(),
-                divisions: filterOptions[0].divisions.filter(d => d).sort()
+                years: filterOptions[0].years.filter(isValid).sort(),
+                divisions: filterOptions[0].divisions.filter(isValid).sort()
             } : { years: [], divisions: [] },
             pagination: {
                 currentPage: parseInt(page),

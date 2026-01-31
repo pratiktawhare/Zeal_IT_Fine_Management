@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { studentsAPI, categoryAPI } from '../services/api';
+import { studentsAPI, categoryAPI, feeLedgerAPI } from '../services/api';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
 import {
@@ -9,7 +9,8 @@ import {
     FiCalendar,
     FiCheck,
     FiUser,
-    FiTag
+    FiTag,
+    FiAlertCircle
 } from 'react-icons/fi';
 import { BiRupee } from 'react-icons/bi';
 
@@ -20,6 +21,7 @@ const AddPayment = () => {
 
     const [student, setStudent] = useState(null);
     const [categories, setCategories] = useState([]);
+    const [ledgers, setLedgers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -42,12 +44,14 @@ const AddPayment = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [studentRes, categoriesRes] = await Promise.all([
+            const [studentRes, categoriesRes, ledgersRes] = await Promise.all([
                 studentsAPI.getByPRN(prn),
-                categoryAPI.getAll({ activeOnly: 'true' })
+                categoryAPI.getAll({ activeOnly: 'true' }),
+                feeLedgerAPI.getStudentLedgers(prn)
             ]);
             setStudent(studentRes.data.data);
             setCategories(categoriesRes.data.data?.categories || []);
+            setLedgers(ledgersRes.data.data?.ledgers || []);
         } catch (err) {
             setError('Failed to load data');
         } finally {
@@ -57,10 +61,18 @@ const AddPayment = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => {
+            const updates = { ...prev, [name]: value };
+
+            // If category changes, check for ledger limits
+            if (name === 'category') {
+                const selectedLedger = ledgers.find(l => l.categoryName === value);
+                if (selectedLedger && updates.type === 'fee') {
+                    updates.amount = ''; // Clear amount to force user re-entry within limit
+                }
+            }
+            return updates;
+        });
         setError('');
     };
 
@@ -80,6 +92,23 @@ const AddPayment = () => {
         if (!selectedCategory) {
             setError('Please select a category');
             return;
+        }
+
+        // Ledger Sync Validation for FEES
+        if (formData.type === 'fee' && formData.category !== 'Others') {
+            const relatedLedger = ledgers.find(l => l.categoryName === formData.category);
+
+            if (relatedLedger) {
+                const amount = parseFloat(formData.amount);
+                if (amount > relatedLedger.remainingBalance) {
+                    setError(`Amount exceeds remaining balance of ₹${relatedLedger.remainingBalance}`);
+                    return;
+                }
+            } else {
+                // If it's a fee but no ledger exists, we treat it as an error because fees MUST be synced
+                // EXCEPT if the user explicitly chose "Others" (handled above)
+                // However, the category dropdown is already filtered, so this might be redundant but safe
+            }
         }
 
         setSubmitting(true);
@@ -123,7 +152,21 @@ const AddPayment = () => {
     };
 
     // Filter categories based on selected type
-    const filteredCategories = categories.filter(cat => cat.type === formData.type);
+    // For FEESS: Only show categories from the student's ledger (+ Others)
+    // For FINES: Show all fine categories (+ Others)
+    const filteredCategories = formData.type === 'fee'
+        ? [
+            ...ledgers
+                .filter(l => l.remainingBalance > 0) // Only show unpaid ledgers
+                .map(l => ({ _id: l.categoryId || l._id, name: l.categoryName, isLedger: true, balance: l.remainingBalance })),
+            //{ _id: 'others', name: 'Others' } // Allow others for miscellaneous fees? User requirement said "only others options can have random fees"
+        ]
+        : categories.filter(cat => cat.type === 'fine');
+
+    // Get currently selected ledger info if applicable
+    const selectedLedgerInfo = formData.type === 'fee'
+        ? ledgers.find(l => l.categoryName === formData.category)
+        : null;
 
     if (loading) {
         return (
@@ -265,13 +308,22 @@ const AddPayment = () => {
                         >
                             <option value="">Select a category</option>
                             {filteredCategories.map((cat) => (
-                                <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                <option key={cat._id} value={cat.name}>
+                                    {cat.name} {cat.isLedger && `(Bal: ₹${cat.balance})`}
+                                </option>
                             ))}
                             <option value="Others">Others (specify below)</option>
                         </select>
+
+                        {formData.type === 'fee' && (
+                            <p className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                                <FiAlertCircle className="inline" /> For fees, only categories with pending payments are shown.
+                            </p>
+                        )}
+
                         {filteredCategories.length === 0 && (
                             <p className="mt-1 text-sm text-amber-600">
-                                No categories found for this type. Select "Others" or create categories in Manage Categories.
+                                No categories found.
                             </p>
                         )}
                     </div>
@@ -314,11 +366,17 @@ const AddPayment = () => {
                                 placeholder="Enter amount"
                                 min="1"
                                 step="1"
+                                max={selectedLedgerInfo ? selectedLedgerInfo.remainingBalance : undefined}
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
                            focus:ring-primary-500 focus:border-primary-500 text-gray-800 
                            placeholder-gray-400"
                             />
                         </div>
+                        {selectedLedgerInfo && (
+                            <p className="mt-1 text-sm text-gray-500">
+                                Max allowed: <span className="font-semibold text-gray-800">₹{selectedLedgerInfo.remainingBalance}</span>
+                            </p>
+                        )}
                     </div>
 
                     {/* Reason */}

@@ -121,6 +121,7 @@ export const feeLedgerAPI = {
     delete: (id) => api.delete(`/fee-ledger/${id}`),
     bulkDelete: (data) => api.delete('/fee-ledger/bulk-delete', { data }),
     getDeletableOptions: () => api.get('/fee-ledger/deletable-options'),
+    getStudentLedgers: (prn) => api.get(`/fee-ledger/student/${prn}`),
 };
 
 // ============================================

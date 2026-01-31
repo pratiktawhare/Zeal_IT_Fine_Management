@@ -166,9 +166,12 @@ const getStudentPayments = asyncHandler(async (req, res) => {
         }
     ]);
 
+    // Filter out invalid values (like emails containing @)
+    const isValid = (val) => val && typeof val === 'string' && !val.includes('@') && val.length < 50;
+
     const filterOptions = filterOptionsTuple.length > 0 ? {
-        years: filterOptionsTuple[0].years.filter(y => y).sort(),
-        divisions: filterOptionsTuple[0].divisions.filter(d => d).sort()
+        years: filterOptionsTuple[0].years.filter(isValid).sort(),
+        divisions: filterOptionsTuple[0].divisions.filter(isValid).sort()
     } : { years: [], divisions: [] };
 
     res.status(200).json({
@@ -444,9 +447,12 @@ const getTransactions = asyncHandler(async (req, res) => {
                     return a.localeCompare(b);
                 };
 
+                // Filter out invalid values (like emails containing @)
+                const isValid = (val) => val && typeof val === 'string' && !val.includes('@') && val.length < 50;
+
                 return {
-                    divisions: divisions.filter(d => d).sort(),
-                    years: years.filter(y => y).sort(),
+                    divisions: divisions.filter(isValid).sort(),
+                    years: years.filter(isValid).sort(),
                     categories: categories.filter(c => c).sort(categorySort),
                     incomeCategories: studentResult.length > 0 ? [...new Set(studentResult[0].categories)].sort(categorySort) : [],
                     expenditureCategories: expenditureResult.filter(c => c).sort(categorySort)

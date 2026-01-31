@@ -527,7 +527,9 @@ const StudentFeesLedger = () => {
                         <select name="category" value={filters.category} onChange={handleFilterChange}
                             className="px-3 py-2 border border-gray-300 rounded-lg">
                             <option value="">All Categories</option>
-                            {filterOptions.categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                            {filterOptions.categories
+                                .filter(c => c.type === 'fee')
+                                .map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                         </select>
                         <select name="status" value={filters.status} onChange={handleFilterChange}
                             className="px-3 py-2 border border-gray-300 rounded-lg">
@@ -716,9 +718,11 @@ const StudentFeesLedger = () => {
                                     required
                                 >
                                     <option value="">Select Category</option>
-                                    {filterOptions.categories.map(c => (
-                                        <option key={c._id} value={c._id}>{c.name}</option>
-                                    ))}
+                                    {filterOptions.categories
+                                        .filter(c => c.type === 'fee')
+                                        .map(c => (
+                                            <option key={c._id} value={c._id}>{c.name}</option>
+                                        ))}
                                 </select>
                             </div>
                             <div>

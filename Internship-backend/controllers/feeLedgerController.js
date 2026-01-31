@@ -139,12 +139,15 @@ const getLedgerEntries = asyncHandler(async (req, res) => {
     ]);
 
     // Merge classes and divisions from both sources
-    const ledgerClasses = ledgerFilterOptions[0]?.classes?.filter(c => c) || [];
-    const studentClasses = studentFilterOptions[0]?.classes?.filter(c => c) || [];
+    // Filter out invalid values (like emails containing @)
+    const isValidClassOrDivision = (val) => val && typeof val === 'string' && !val.includes('@') && val.length < 50;
+
+    const ledgerClasses = ledgerFilterOptions[0]?.classes?.filter(isValidClassOrDivision) || [];
+    const studentClasses = studentFilterOptions[0]?.classes?.filter(isValidClassOrDivision) || [];
     const allClasses = [...new Set([...ledgerClasses, ...studentClasses])].sort();
 
-    const ledgerDivisions = ledgerFilterOptions[0]?.divisions?.filter(d => d) || [];
-    const studentDivisions = studentFilterOptions[0]?.divisions?.filter(d => d) || [];
+    const ledgerDivisions = ledgerFilterOptions[0]?.divisions?.filter(isValidClassOrDivision) || [];
+    const studentDivisions = studentFilterOptions[0]?.divisions?.filter(isValidClassOrDivision) || [];
     const allDivisions = [...new Set([...ledgerDivisions, ...studentDivisions])].sort();
 
     const categories = await PaymentCategory.find({ isActive: true }).select('_id name type amount');
@@ -617,6 +620,60 @@ const getDeletableOptions = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @desc    Get all ledger entries for a specific student
+ * @route   GET /api/fee-ledger/student/:prn
+ * @access  Private
+ * 
+ * Returns all ledger entries for the student with remaining balance info
+ */
+const getStudentLedgers = asyncHandler(async (req, res) => {
+    const { prn } = req.params;
+
+    // Find student by PRN
+    const student = await Student.findOne({ prn: prn.toUpperCase() });
+
+    if (!student) {
+        res.status(404);
+        throw new Error('Student not found');
+    }
+
+    // Get all active ledger entries for this student
+    const ledgers = await FeeLedger.find({
+        student: student._id,
+        isActive: true
+    })
+        .populate('category', 'name type amount')
+        .select('category categoryName totalAmount paidAmount status academicYear')
+        .lean();
+
+    // Calculate remaining balance for each ledger
+    const ledgersWithBalance = ledgers.map(ledger => ({
+        _id: ledger._id,
+        categoryId: ledger.category?._id,
+        categoryName: ledger.categoryName || ledger.category?.name,
+        categoryType: ledger.category?.type || 'fee',
+        totalAmount: ledger.totalAmount,
+        paidAmount: ledger.paidAmount,
+        remainingBalance: ledger.totalAmount - ledger.paidAmount,
+        status: ledger.status,
+        academicYear: ledger.academicYear
+    }));
+
+    res.status(200).json({
+        success: true,
+        data: {
+            student: {
+                prn: student.prn,
+                name: student.name,
+                year: student.year,
+                division: student.division
+            },
+            ledgers: ledgersWithBalance
+        }
+    });
+});
+
 module.exports = {
     getLedgerEntries,
     getClassSummary,
@@ -625,5 +682,6 @@ module.exports = {
     getLedgerEntry,
     deleteLedgerEntry,
     bulkDeleteLedgerEntries,
-    getDeletableOptions
+    getDeletableOptions,
+    getStudentLedgers
 };

@@ -3,9 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     FiHome,
-    FiUpload,
     FiSearch,
-    FiDollarSign,
     FiLogOut,
     FiMenu,
     FiX,
@@ -13,7 +11,8 @@ import {
     FiTag,
     FiFileText,
     FiChevronDown,
-    FiInfo
+    FiInfo,
+    FiUsers
 } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
 
@@ -32,14 +31,13 @@ const Navbar = () => {
 
     const navLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: FiHome },
-        { path: '/upload', label: 'Upload CSV', icon: FiUpload },
+        { path: '/admin/students', label: 'Students', icon: FiUsers },
         { path: '/search', label: 'Search Student', icon: FiSearch },
         { path: '/expenditure', label: 'Add Expense', icon: FaRupeeSign },
         { path: '/categories', label: 'Categories', icon: FiTag },
     ];
 
     const reportLinks = [
-        { path: '/admin/students', label: 'Student Management' },
         { path: '/admin/fees-ledger', label: 'Fee Records' },
         { path: '/admin/transactions', label: 'Transactions' },
     ];
