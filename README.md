@@ -256,8 +256,16 @@ VITE_API_URL=https://your-backend-url.onrender.com/api
 
 ## 👥 Contributors
 
-- **Pratik Tawhare** - [GitHub](https://github.com/pratiktawhare) | [Email](mailto:pratiktawhare3@gmail.com)
-- **Abhijeet Suryawanshi** - [GitHub](https://github.com/abhijeetsuryawanshi) | [Email](mailto:abhijeetsuryawanshi23@gmail.com)
+| Name | GitHub | LinkedIn |
+|------|--------|----------|
+| **Pratik Tawhare** | [pratiktawhare](https://github.com/pratiktawhare) | [LinkedIn](https://www.linkedin.com/in/pratik-tawhare) |
+| **Aary Thasal** | [AaryThasal](https://github.com/AaryThasal) | [LinkedIn](https://www.linkedin.com/in/aary-thasal-9255392a7) |
+| **Komal Mhaske** | [Komal251005](https://github.com/Komal251005) | [LinkedIn](https://www.linkedin.com/in/komal-mhaske-8b554331a/) |
+| **Tanishka Patil** | [PatilTanishkaa](https://github.com/PatilTanishkaa) | [LinkedIn](https://www.linkedin.com/in/tanishkapatillnkdin/) |
+| **Abhishek Tamte** | [abhishek200604](https://github.com/abhishek200604) | [LinkedIn](https://www.linkedin.com/in/abhishek-tamte-09b81421a/) |
+| **Akash Patil** | [Akashpatil2005](https://github.com/Akashpatil2005) | [LinkedIn](https://www.linkedin.com/in/akash-patil-b08335290/) |
+| **Arbaj Sande** | [ArbajSande](https://github.com/ArbajSande) | [LinkedIn](https://www.linkedin.com/in/arbaj-sande-47bb1a31b) |
+| **Abhijeet Suryawanshi** | [Abhijeet-dev07](https://github.com/Abhijeet-dev07) | [LinkedIn](https://www.linkedin.com/in/abhijeet-suryawanshi-21a587294) |
 
 ---
 
