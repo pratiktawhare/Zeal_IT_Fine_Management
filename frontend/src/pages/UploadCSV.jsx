@@ -120,8 +120,8 @@ const UploadCSV = () => {
                     Your CSV file should have the following columns:
                 </p>
                 <div className="bg-white rounded-lg p-4 font-mono text-xs text-gray-700 overflow-x-auto">
-                    <p className="text-blue-600 font-semibold">Sr No, Academic Year, Semester, Year, Division, Roll No, PRN Number, Student Name, Department, Mobile Number, Email Id</p>
-                    <p className="text-gray-500 mt-1">1, 2024-25, 1, FE, A, 101, PRN2024001, John Doe, IT, 9876543210, john@example.com</p>
+                    <p className="text-blue-600 font-semibold">Sr No., Academic Year, Semester, Year, Division, Roll No, PRN Number, Student Name, Mobile Number, Email Id</p>
+                    <p className="text-gray-500 mt-1">1, 2024-25, VI, TE, A, 101, PRN2024001, Rahul Sharma, 9876543210, rahul.sharma@college.edu</p>
                 </div>
             </div>
 
@@ -254,7 +254,7 @@ const UploadCSV = () => {
                 <p className="text-sm text-gray-500 mb-2">Need a sample file?</p>
                 <button
                     onClick={() => {
-                        const csvContent = "Sr No,Academic Year,Semester,Year,Division,Roll No,PRN Number,Student Name,Department,Mobile Number,Email Id\n1,2024-25,1,FE,A,101,PRN2024001,John Doe,IT,9876543210,john@example.com\n2,2024-25,1,FE,A,102,PRN2024002,Jane Smith,CS,9876543211,jane@example.com\n3,2024-25,1,FE,B,103,PRN2024003,Bob Johnson,ENTC,9876543212,bob@example.com";
+                        const csvContent = "Student Guardian List\nSr No.,Academic Year,Semester,Year,Division,Roll No,PRN Number,Student Name,Mobile Number,Email Id\n1,2024-25,VI,TE,A,101,PRN2024001,Rahul Sharma,9876543210,rahul.sharma@college.edu\n2,2024-25,VI,TE,A,102,PRN2024002,Priya Patel,9876543211,priya.patel@college.edu\n3,2024-25,VI,TE,B,103,PRN2024003,Amit Kumar,9876543212,amit.kumar@college.edu\n4,2024-25,VI,TE,B,104,PRN2024004,Sneha Gupta,9876543213,sneha.gupta@college.edu\n5,2024-25,IV,SE,A,201,PRN2024005,Vikram Singh,9876543214,vikram.singh@college.edu\n6,2024-25,IV,SE,A,202,PRN2024006,Neha Verma,9876543215,neha.verma@college.edu\n7,2024-25,IV,SE,B,203,PRN2024007,Rohan Deshmukh,9876543216,rohan.deshmukh@college.edu\n8,2024-25,II,FE,A,301,PRN2024008,Ananya Iyer,9876543217,ananya.iyer@college.edu\n9,2024-25,II,FE,A,302,PRN2024009,Karan Mehta,9876543218,karan.mehta@college.edu\n10,2024-25,II,FE,B,303,PRN2024010,Pooja Joshi,9876543219,pooja.joshi@college.edu";
                         const blob = new Blob([csvContent], { type: 'text/csv' });
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');

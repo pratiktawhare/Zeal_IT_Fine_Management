@@ -83,11 +83,7 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
         // Wait for CSV parsing to complete
         await parseCSV;
 
-        // Log first row keys for debugging
-        if (results.length > 0) {
-            console.log('CSV Headers detected:', Object.keys(results[0]));
-            console.log('First row data:', results[0]);
-        }
+        // Log first row keys for debugging (Removed for production)
 
         // Helper function to find value by key match
         // Priority: 1. Exact match, 2. Key starts with rowKey, 3. rowKey starts with key
@@ -146,7 +142,6 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
 
                 // Skip rows with missing required fields (PRN and Name are required)
                 if (!prn || !name) {
-                    console.log('Skipping row - missing PRN or Name:', { prn, name, row });
                     errors.push({
                         prn: prn || 'N/A',
                         error: 'Missing required fields (PRN Number or Student Name)'
@@ -157,7 +152,6 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
 
                 // Validate that Name is not an email (prevents corrupted rows)
                 if (name.includes('@')) {
-                    console.log('Skipping row - Name looks like email:', { prn, name });
                     errors.push({
                         prn: prn || 'N/A',
                         error: 'Invalid Name (appears to be an email address)'
@@ -180,8 +174,6 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
                     email: email || undefined,
                     phone: phone || undefined
                 };
-
-                console.log('Processing student:', prn, name);
 
                 // Check if student already exists
                 const existingStudent = await Student.findOne({ prn: prn });
@@ -412,13 +404,13 @@ const addFineToStudent = asyncHandler(async (req, res) => {
 
                 // Save triggers the pre-save hook which updates paidAmount and status
                 await ledger.save();
-                console.log(`Synced payment of ${amount} to FeeLedger ${ledger._id}`);
             }
         }
     } catch (syncError) {
         console.error('Error syncing with FeeLedger:', syncError);
         // We don't fail the request if sync fails, just log it
     }
+
     // =========================================================
 
     // Get the saved payment with _id
