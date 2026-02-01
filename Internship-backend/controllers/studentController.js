@@ -154,6 +154,18 @@ const uploadStudentsCSV = asyncHandler(async (req, res) => {
                     continue;
                 }
 
+                // Validate that Name is not an email (prevents corrupted rows)
+                if (name.includes('@')) {
+                    console.log('Skipping row - Name looks like email:', { prn, name });
+                    errors.push({
+                        prn: prn || 'N/A',
+                        error: 'Invalid Name (appears to be an email address)'
+                    });
+                    errorCount++;
+                    continue;
+                }
+
+
                 // Prepare student data
                 const studentData = {
                     prn: prn,
