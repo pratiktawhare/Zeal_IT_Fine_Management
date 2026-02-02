@@ -188,46 +188,6 @@ VITE_API_URL=https://your-backend-url.onrender.com/api
 
 ---
 
-## 📡 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/auth/setup-status` | Check if first-time setup required |
-| POST | `/api/auth/register` | Register first admin |
-| POST | `/api/auth/login` | Admin login |
-| GET | `/api/auth/profile` | Get admin profile |
-| POST | `/api/auth/forgot-password` | Request password reset OTP |
-| POST | `/api/auth/verify-otp` | Verify OTP |
-| POST | `/api/auth/reset-password` | Reset password |
-
-### Students
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/students` | Get all students (paginated) |
-| GET | `/api/students/search` | Search students |
-| GET | `/api/students/:prn` | Get student by PRN |
-| POST | `/api/students/add` | Add new student |
-| POST | `/api/students/upload-csv` | Bulk upload via CSV |
-| POST | `/api/students/add-fine/:prn` | Add payment/fine |
-| DELETE | `/api/students/:prn` | Delete student |
-
-### Fee Ledger
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/fee-ledger` | Get all ledger entries |
-| POST | `/api/fee-ledger/generate` | Generate fee ledger for class |
-| POST | `/api/fee-ledger/:id/pay` | Record payment |
-| DELETE | `/api/fee-ledger/bulk-delete` | Bulk delete ledgers |
-
-### Reports
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/reports/transactions` | Get all transactions |
-| GET | `/api/reports/student-payments` | Get student payment summary |
-
----
-
 ## 🌍 Deployment
 
 ### Backend (Render)
