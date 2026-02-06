@@ -105,35 +105,55 @@ const UploadCSV = () => {
     return (
         <div className="animate-fadeIn max-w-3xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Upload Student Data</h1>
-                <p className="text-gray-600 mt-1">Import students from a CSV file</p>
+            <div className="mb-4">
+                <h1 className="text-2xl font-bold text-gray-800">Upload Student Data</h1>
+                <p className="text-gray-600 text-sm">Import students from a CSV file</p>
             </div>
 
             {/* CSV Format Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
                 <h3 className="text-sm font-semibold text-blue-800 mb-2 flex items-center">
                     <FiAlertCircle className="w-4 h-4 mr-2" />
                     CSV Format Requirements
                 </h3>
-                <p className="text-sm text-blue-700 mb-3">
+                <p className="text-sm text-blue-700 mb-2">
                     Your CSV file should have the following columns:
                 </p>
-                <div className="bg-white rounded-lg p-4 font-mono text-xs text-gray-700 overflow-x-auto">
+                <div className="bg-white rounded-lg p-3 font-mono text-xs text-gray-700 overflow-x-auto mb-3">
                     <p className="text-blue-600 font-semibold">Sr No., Academic Year, Semester, Year, Division, Roll No, PRN Number, Student Name, Mobile Number, Email Id</p>
                     <p className="text-gray-500 mt-1">1, 2024-25, VI, TE, A, 101, PRN2024001, Rahul Sharma, 9876543210, rahul.sharma@college.edu</p>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-blue-200">
+                    <p className="text-sm text-blue-700">Need a sample file?</p>
+                    <button
+                        onClick={() => {
+                            const csvContent = "Student Guardian List\nSr No.,Academic Year,Semester,Year,Division,Roll No,PRN Number,Student Name,Mobile Number,Email Id\n1,2024-25,VI,TE,A,101,PRN2024001,Rahul Sharma,9876543210,rahul.sharma@college.edu\n2,2024-25,VI,TE,A,102,PRN2024002,Priya Patel,9876543211,priya.patel@college.edu\n3,2024-25,VI,TE,B,103,PRN2024003,Amit Kumar,9876543212,amit.kumar@college.edu\n4,2024-25,VI,TE,B,104,PRN2024004,Sneha Gupta,9876543213,sneha.gupta@college.edu\n5,2024-25,IV,SE,A,201,PRN2024005,Vikram Singh,9876543214,vikram.singh@college.edu\n6,2024-25,IV,SE,A,202,PRN2024006,Neha Verma,9876543215,neha.verma@college.edu\n7,2024-25,IV,SE,B,203,PRN2024007,Rohan Deshmukh,9876543216,rohan.deshmukh@college.edu\n8,2024-25,II,FE,A,301,PRN2024008,Ananya Iyer,9876543217,ananya.iyer@college.edu\n9,2024-25,II,FE,A,302,PRN2024009,Karan Mehta,9876543218,karan.mehta@college.edu\n10,2024-25,II,FE,B,303,PRN2024010,Pooja Joshi,9876543219,pooja.joshi@college.edu";
+                            const blob = new Blob([csvContent], { type: 'text/csv' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'sample_students.csv';
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                        }}
+                        className="inline-flex items-center space-x-2 text-blue-700 hover:text-blue-800 
+                         font-medium text-sm bg-white px-3 py-1.5 rounded-lg border border-blue-300 hover:bg-blue-100 transition-colors"
+                    >
+                        <FiDownload className="w-4 h-4" />
+                        <span>Download Sample CSV</span>
+                    </button>
                 </div>
             </div>
 
             {error && (
-                <div className="mb-6">
+                <div className="mb-4">
                     <ErrorMessage message={error} onClose={() => setError('')} />
                 </div>
             )}
 
             {/* Upload Result */}
             {uploadResult && (
-                <div className="mb-6 p-6 bg-green-50 border border-green-200 rounded-xl">
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
                     <div className="flex items-start space-x-3">
                         <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                             <FiCheck className="w-5 h-5 text-white" />
@@ -170,7 +190,7 @@ const UploadCSV = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer 
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer 
                     transition-all duration-200 ${isDragging
                         ? 'border-primary-500 bg-primary-50'
                         : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
@@ -185,27 +205,27 @@ const UploadCSV = () => {
                 />
 
                 <div className="flex flex-col items-center">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 
                           ${isDragging ? 'bg-primary-100' : 'bg-gray-100'}`}>
-                        <FiUpload className={`w-8 h-8 ${isDragging ? 'text-primary-600' : 'text-gray-400'}`} />
+                        <FiUpload className={`w-6 h-6 ${isDragging ? 'text-primary-600' : 'text-gray-400'}`} />
                     </div>
-                    <p className="text-lg font-medium text-gray-700 mb-1">
+                    <p className="text-base font-medium text-gray-700 mb-1">
                         {isDragging ? 'Drop your file here' : 'Drag & drop your CSV file'}
                     </p>
                     <p className="text-sm text-gray-500">
                         or <span className="text-primary-600 font-medium">browse</span> to choose a file
                     </p>
-                    <p className="text-xs text-gray-400 mt-2">Maximum file size: 5MB</p>
+                    <p className="text-xs text-gray-400 mt-1">Maximum file size: 5MB</p>
                 </div>
             </div>
 
             {/* Selected File */}
             {file && (
-                <div className="mt-6 bg-white border border-gray-200 rounded-xl p-4">
+                <div className="mt-4 bg-white border border-gray-200 rounded-xl p-3">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                                <FiFile className="w-6 h-6 text-primary-600" />
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <FiFile className="w-5 h-5 text-primary-600" />
                             </div>
                             <div>
                                 <p className="font-medium text-gray-800">{file.name}</p>
@@ -226,11 +246,11 @@ const UploadCSV = () => {
             )}
 
             {/* Upload Button */}
-            <div className="mt-6 flex justify-end">
+            <div className="mt-4 flex justify-end">
                 <button
                     onClick={handleUpload}
                     disabled={!file || isUploading}
-                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-700 
+                    className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary-700 
                      to-primary-800 text-white font-medium rounded-lg hover:from-primary-600 
                      hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed 
                      transition-all duration-200 shadow-lg shadow-primary-200"
@@ -246,28 +266,6 @@ const UploadCSV = () => {
                             <span>Upload Students</span>
                         </>
                     )}
-                </button>
-            </div>
-
-            {/* Sample Download */}
-            <div className="mt-8 text-center">
-                <p className="text-sm text-gray-500 mb-2">Need a sample file?</p>
-                <button
-                    onClick={() => {
-                        const csvContent = "Student Guardian List\nSr No.,Academic Year,Semester,Year,Division,Roll No,PRN Number,Student Name,Mobile Number,Email Id\n1,2024-25,VI,TE,A,101,PRN2024001,Rahul Sharma,9876543210,rahul.sharma@college.edu\n2,2024-25,VI,TE,A,102,PRN2024002,Priya Patel,9876543211,priya.patel@college.edu\n3,2024-25,VI,TE,B,103,PRN2024003,Amit Kumar,9876543212,amit.kumar@college.edu\n4,2024-25,VI,TE,B,104,PRN2024004,Sneha Gupta,9876543213,sneha.gupta@college.edu\n5,2024-25,IV,SE,A,201,PRN2024005,Vikram Singh,9876543214,vikram.singh@college.edu\n6,2024-25,IV,SE,A,202,PRN2024006,Neha Verma,9876543215,neha.verma@college.edu\n7,2024-25,IV,SE,B,203,PRN2024007,Rohan Deshmukh,9876543216,rohan.deshmukh@college.edu\n8,2024-25,II,FE,A,301,PRN2024008,Ananya Iyer,9876543217,ananya.iyer@college.edu\n9,2024-25,II,FE,A,302,PRN2024009,Karan Mehta,9876543218,karan.mehta@college.edu\n10,2024-25,II,FE,B,303,PRN2024010,Pooja Joshi,9876543219,pooja.joshi@college.edu";
-                        const blob = new Blob([csvContent], { type: 'text/csv' });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'sample_students.csv';
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                    }}
-                    className="inline-flex items-center space-x-2 text-primary-600 hover:text-primary-700 
-                     font-medium text-sm"
-                >
-                    <FiDownload className="w-4 h-4" />
-                    <span>Download Sample CSV</span>
                 </button>
             </div>
         </div>

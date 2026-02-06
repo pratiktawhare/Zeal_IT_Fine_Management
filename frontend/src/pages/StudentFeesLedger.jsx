@@ -284,7 +284,7 @@ const StudentFeesLedger = () => {
     };
 
     // Bulk Delete Handler
-    const [bulkDeleteClass, setBulkDeleteClass] = useState('');
+    const [bulkDeleteClasses, setBulkDeleteClasses] = useState([]);
     const [bulkDeleteCategory, setBulkDeleteCategory] = useState('');
     const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
     const [deletableOptions, setDeletableOptions] = useState({ classes: [], categories: [] });
@@ -309,31 +309,40 @@ const StudentFeesLedger = () => {
             setError('Please select a ledger category to delete');
             return;
         }
-        if (!bulkDeleteClass) {
-            setError('Please select a class to delete');
+        if (bulkDeleteClasses.length === 0) {
+            setError('Please select at least one class to delete');
             return;
         }
 
         const categoryName = deletableOptions.categories.find(c => c._id === bulkDeleteCategory)?.name || 'selected category';
+        const classesText = bulkDeleteClasses.join(', ');
 
-        if (!window.confirm(`⚠️ DANGER: Are you sure you want to delete ALL "${categoryName}" fee records for ${bulkDeleteClass}? \n\nThis will permanently delete:\n- All unpaid entries\n- All PAID entries\n- All associated payment history\n\nThis action cannot be undone.`)) {
+        if (!window.confirm(`⚠️ DANGER: Are you sure you want to delete ALL "${categoryName}" fee records for ${classesText}? \n\nThis will permanently delete:\n- All unpaid entries\n- All PAID entries\n- All associated payment history\n\nThis action cannot be undone.`)) {
             return;
         }
 
         setBulkDeleteLoading(true);
         try {
-            const response = await feeLedgerAPI.bulkDelete({
-                studentClass: bulkDeleteClass,
-                category: bulkDeleteCategory,
-                includeWithPayments: true
-            });
+            let totalDeleted = 0;
+            let totalFinesRemoved = 0;
+
+            // Delete for each selected class
+            for (const studentClass of bulkDeleteClasses) {
+                const response = await feeLedgerAPI.bulkDelete({
+                    studentClass: studentClass,
+                    category: bulkDeleteCategory,
+                    includeWithPayments: true
+                });
+                totalDeleted += response.data.data.deletedCount || 0;
+                totalFinesRemoved += response.data.data.finesRemoved || 0;
+            }
+
             setShowBulkDeleteModal(false);
-            setBulkDeleteClass('');
+            setBulkDeleteClasses([]);
             setBulkDeleteCategory('');
 
-            const { deletedCount, finesRemoved } = response.data.data;
-            let message = `Deleted ${deletedCount} ledger entries`;
-            if (finesRemoved > 0) message += ` and ${finesRemoved} payment records`;
+            let message = `Deleted ${totalDeleted} ledger entries`;
+            if (totalFinesRemoved > 0) message += ` and ${totalFinesRemoved} payment records`;
 
             alert(message);
             fetchEntries();
@@ -799,8 +808,7 @@ const StudentFeesLedger = () => {
                     <div className="bg-white rounded-xl max-w-md w-full p-6">
                         <h3 className="text-lg font-semibold mb-4 text-red-600">Delete Ledger Entries</h3>
                         <p className="text-sm text-gray-600 mb-4">
-                            This will delete <strong>ALL unpaid</strong> ledger entries for the selected class.
-                            Entries with existing payments will be preserved.
+                            This will delete <strong>ALL</strong> ledger entries for the selected class(es).
                         </p>
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-sm text-red-700">
@@ -829,17 +837,31 @@ const StudentFeesLedger = () => {
                                     </select>
                                 </div>
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
-                                    <select
-                                        value={bulkDeleteClass}
-                                        onChange={(e) => setBulkDeleteClass(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    >
-                                        <option value="">Select Class</option>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Class(es)</label>
+                                    <div className="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
                                         {deletableOptions.classes.map(cls => (
-                                            <option key={cls} value={cls}>{cls}</option>
+                                            <label key={cls} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={bulkDeleteClasses.includes(cls)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setBulkDeleteClasses([...bulkDeleteClasses, cls]);
+                                                        } else {
+                                                            setBulkDeleteClasses(bulkDeleteClasses.filter(c => c !== cls));
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                                                />
+                                                <span className="text-sm text-gray-700">{cls}</span>
+                                            </label>
                                         ))}
-                                    </select>
+                                    </div>
+                                    {bulkDeleteClasses.length > 0 && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Selected: {bulkDeleteClasses.join(', ')}
+                                        </p>
+                                    )}
                                 </div>
                             </>
                         )}
@@ -847,14 +869,14 @@ const StudentFeesLedger = () => {
                         <div className="flex gap-2">
                             <button
                                 type="button"
-                                onClick={() => { setShowBulkDeleteModal(false); setBulkDeleteClass(''); setBulkDeleteCategory(''); }}
+                                onClick={() => { setShowBulkDeleteModal(false); setBulkDeleteClasses([]); setBulkDeleteCategory(''); }}
                                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleBulkDelete}
-                                disabled={bulkDeleteLoading || !bulkDeleteClass || !bulkDeleteCategory}
+                                disabled={bulkDeleteLoading || bulkDeleteClasses.length === 0 || !bulkDeleteCategory}
                                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                             >
                                 {bulkDeleteLoading ? 'Deleting...' : 'Delete All'}

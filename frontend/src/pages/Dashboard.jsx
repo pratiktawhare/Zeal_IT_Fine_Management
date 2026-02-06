@@ -10,7 +10,8 @@ import {
     FiFileText,
     FiUpload,
     FiSearch,
-    FiPlusCircle
+    FiPlusCircle,
+    FiGrid
 } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
 
@@ -53,23 +54,23 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="animate-fadeIn">
+        <div className="animate-fadeIn h-[calc(100vh-100px)] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-5">
                 <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-                <p className="text-gray-600 mt-1">Welcome to ITSA Accounts Portal</p>
+                <p className="text-gray-600">Welcome to ITSA Accounts Portal</p>
             </div>
 
             {error && (
-                <div className="mb-6">
+                <div className="mb-4">
                     <ErrorMessage message={error} onClose={() => setError('')} />
                 </div>
             )}
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
                 {/* Total Income */}
-                <Link to="/admin/transactions" className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover cursor-pointer hover:border-green-200 transition-colors">
+                <Link to="/admin/transactions" className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 card-hover cursor-pointer hover:border-green-200 transition-colors">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total Income</p>
@@ -86,7 +87,7 @@ const Dashboard = () => {
                 </Link>
 
                 {/* Total Expenditure */}
-                <Link to="/admin/transactions" className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover cursor-pointer hover:border-red-200 transition-colors">
+                <Link to="/admin/transactions" className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 card-hover cursor-pointer hover:border-red-200 transition-colors">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total Expenditure</p>
@@ -103,7 +104,7 @@ const Dashboard = () => {
                 </Link>
 
                 {/* Balance */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 card-hover">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Current Balance</p>
@@ -122,7 +123,7 @@ const Dashboard = () => {
 
                 {/* Total Students */}
                 <Link to="/admin/students"
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover cursor-pointer hover:border-purple-200 transition-colors">
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 card-hover cursor-pointer hover:border-purple-200 transition-colors">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total Students</p>
@@ -140,9 +141,9 @@ const Dashboard = () => {
             </div>
 
             {/* Quick Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-2 gap-5 mb-5">
                 <Link to="/admin/transactions"
-                    className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer">
+                    className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-5 border border-emerald-200 hover:border-emerald-300 transition-colors cursor-pointer">
                     <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
                             <FiFileText className="w-5 h-5 text-white" />
@@ -157,7 +158,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link to="/admin/transactions"
-                    className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 hover:border-blue-300 transition-colors cursor-pointer">
+                    className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200 hover:border-blue-300 transition-colors cursor-pointer">
                     <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
                             <FiUsers className="w-5 h-5 text-white" />
@@ -173,12 +174,12 @@ const Dashboard = () => {
             </div>
 
             {/* Category Breakdown & Quick Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 flex-1">
                 {/* Expenditure by Category */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Expenditure by Category</h2>
                     {summary?.expenditureByCategory && summary.expenditureByCategory.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="space-y-3 max-h-[200px] overflow-y-auto">
                             {summary.expenditureByCategory.map((cat, index) => {
                                 const total = summary.financial?.totalExpenditure || 1;
                                 const percentage = ((cat.totalAmount / total) * 100).toFixed(1);
@@ -209,64 +210,90 @@ const Dashboard = () => {
                             })}
                         </div>
                     ) : (
-                        <p className="text-gray-500 text-center py-8">No expenditure data available</p>
+                        <p className="text-gray-500 text-center py-6 text-sm">No expenditure data available</p>
                     )}
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         <Link
                             to="/upload"
-                            className="flex flex-col items-center justify-center p-6 bg-gradient-to-br 
+                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br 
                          from-primary-50 to-primary-100 rounded-xl border border-primary-200 
                          hover:from-primary-100 hover:to-primary-200 transition-all group"
                         >
-                            <div className="w-12 h-12 bg-primary-700 rounded-xl flex items-center justify-center 
-                              mb-3 group-hover:scale-110 transition-transform">
-                                <FiUpload className="w-6 h-6 text-white" />
+                            <div className="w-11 h-11 bg-primary-700 rounded-xl flex items-center justify-center 
+                              mb-2 group-hover:scale-110 transition-transform">
+                                <FiUpload className="w-5 h-5 text-white" />
                             </div>
                             <span className="text-sm font-medium text-primary-800">Upload CSV</span>
                         </Link>
 
                         <Link
                             to="/admin/fees-ledger"
-                            className="flex flex-col items-center justify-center p-6 bg-gradient-to-br 
+                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br 
                          from-secondary-50 to-secondary-100 rounded-xl border border-secondary-200 
                          hover:from-secondary-100 hover:to-secondary-200 transition-all group"
                         >
-                            <div className="w-12 h-12 bg-secondary-600 rounded-xl flex items-center justify-center 
-                              mb-3 group-hover:scale-110 transition-transform">
-                                <FiFileText className="w-6 h-6 text-white" />
+                            <div className="w-11 h-11 bg-secondary-600 rounded-xl flex items-center justify-center 
+                              mb-2 group-hover:scale-110 transition-transform">
+                                <FiFileText className="w-5 h-5 text-white" />
                             </div>
                             <span className="text-sm font-medium text-secondary-800">Common Fees</span>
                         </Link>
 
                         <Link
                             to="/expenditure"
-                            className="flex flex-col items-center justify-center p-6 bg-gradient-to-br 
+                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br 
                          from-amber-50 to-amber-100 rounded-xl border border-amber-200 
                          hover:from-amber-100 hover:to-amber-200 transition-all group"
                         >
-                            <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center 
-                              mb-3 group-hover:scale-110 transition-transform">
-                                <FiPlusCircle className="w-6 h-6 text-white" />
+                            <div className="w-11 h-11 bg-amber-500 rounded-xl flex items-center justify-center 
+                              mb-2 group-hover:scale-110 transition-transform">
+                                <FiPlusCircle className="w-5 h-5 text-white" />
                             </div>
                             <span className="text-sm font-medium text-amber-800">Add Expenditure</span>
                         </Link>
 
                         <Link
                             to="/admin/transactions"
-                            className="flex flex-col items-center justify-center p-6 bg-gradient-to-br 
+                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br 
                          from-purple-50 to-purple-100 rounded-xl border border-purple-200 
                          hover:from-purple-100 hover:to-purple-200 transition-all group"
                         >
-                            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center 
-                              mb-3 group-hover:scale-110 transition-transform">
-                                <FiFileText className="w-6 h-6 text-white" />
+                            <div className="w-11 h-11 bg-purple-600 rounded-xl flex items-center justify-center 
+                              mb-2 group-hover:scale-110 transition-transform">
+                                <FiFileText className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-sm font-medium text-purple-800">View Transactions</span>
+                            <span className="text-sm font-medium text-purple-800">Transactions</span>
+                        </Link>
+
+                        <Link
+                            to="/admin/students"
+                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br 
+                         from-cyan-50 to-cyan-100 rounded-xl border border-cyan-200 
+                         hover:from-cyan-100 hover:to-cyan-200 transition-all group"
+                        >
+                            <div className="w-11 h-11 bg-cyan-600 rounded-xl flex items-center justify-center 
+                              mb-2 group-hover:scale-110 transition-transform">
+                                <FiUsers className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-sm font-medium text-cyan-800">Students</span>
+                        </Link>
+
+                        <Link
+                            to="/admin/categories"
+                            className="flex flex-col items-center justify-center p-4 bg-gradient-to-br 
+                         from-rose-50 to-rose-100 rounded-xl border border-rose-200 
+                         hover:from-rose-100 hover:to-rose-200 transition-all group"
+                        >
+                            <div className="w-11 h-11 bg-rose-600 rounded-xl flex items-center justify-center 
+                              mb-2 group-hover:scale-110 transition-transform">
+                                <FiGrid className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-sm font-medium text-rose-800">Categories</span>
                         </Link>
                     </div>
                 </div>

@@ -43,7 +43,7 @@ const StudentManagement = () => {
     const searchWrapperRef = useRef(null);
 
     const [bulkDeleteYear, setBulkDeleteYear] = useState('');
-    const [bulkDeleteDivision, setBulkDeleteDivision] = useState('');
+    const [bulkDeleteDivisions, setBulkDeleteDivisions] = useState([]);
 
     const [filters, setFilters] = useState({
         year: '', division: '', search: '',
@@ -185,22 +185,26 @@ const StudentManagement = () => {
 
     const handleBulkDelete = async () => {
         try {
-            if (!bulkDeleteYear || !bulkDeleteDivision) {
-                setError('Please select both Year and Division');
+            if (!bulkDeleteYear || bulkDeleteDivisions.length === 0) {
+                setError('Please select Year and at least one Division');
                 return;
             }
 
+            const divisionsText = bulkDeleteDivisions.join(', ');
             // Confirm again
-            if (!window.confirm(`Are you sure you want to delete ALL students in ${bulkDeleteYear} Division ${bulkDeleteDivision}?`)) {
+            if (!window.confirm(`Are you sure you want to delete ALL students in ${bulkDeleteYear} Division(s) ${divisionsText}?`)) {
                 return;
             }
 
-            await studentManagementAPI.deleteByClass(bulkDeleteYear, bulkDeleteDivision);
+            // Delete each division one by one
+            for (const division of bulkDeleteDivisions) {
+                await studentManagementAPI.deleteByClass(bulkDeleteYear, division);
+            }
 
-            setSuccess(`Students from ${bulkDeleteYear} Div ${bulkDeleteDivision} deleted successfully`);
+            setSuccess(`Students from ${bulkDeleteYear} Div ${divisionsText} deleted successfully`);
             setShowBulkDeleteModal(false);
             setBulkDeleteYear('');
-            setBulkDeleteDivision('');
+            setBulkDeleteDivisions([]);
             fetchStudents();
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to delete students');
@@ -578,7 +582,7 @@ const StudentManagement = () => {
                             <h3 className="text-lg font-semibold">Delete Class Data</h3>
                         </div>
                         <p className="text-gray-600 mb-4">
-                            Select the Year and Division to delete. <br />
+                            Select the Year and Division(s) to delete. <br />
                             <span className="text-red-600 font-semibold">Warning: This action cannot be undone.</span>
                         </p>
 
@@ -596,22 +600,38 @@ const StudentManagement = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Select Division</label>
-                                <select
-                                    value={bulkDeleteDivision}
-                                    onChange={(e) => setBulkDeleteDivision(e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg"
-                                >
-                                    <option value="">-- Select Division --</option>
-                                    {filterOptions.divisions.map(d => <option key={d} value={d}>{d}</option>)}
-                                </select>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Select Division(s)</label>
+                                <div className="border rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
+                                    {filterOptions.divisions.map(d => (
+                                        <label key={d} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                            <input
+                                                type="checkbox"
+                                                checked={bulkDeleteDivisions.includes(d)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setBulkDeleteDivisions([...bulkDeleteDivisions, d]);
+                                                    } else {
+                                                        setBulkDeleteDivisions(bulkDeleteDivisions.filter(div => div !== d));
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                                            />
+                                            <span className="text-sm text-gray-700">Division {d}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                {bulkDeleteDivisions.length > 0 && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Selected: {bulkDeleteDivisions.join(', ')}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
                         <div className="flex gap-3">
-                            <button onClick={() => { setShowBulkDeleteModal(false); setBulkDeleteYear(''); setBulkDeleteDivision(''); }}
+                            <button onClick={() => { setShowBulkDeleteModal(false); setBulkDeleteYear(''); setBulkDeleteDivisions([]); }}
                                 className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                            <button onClick={handleBulkDelete} disabled={!bulkDeleteYear || !bulkDeleteDivision}
+                            <button onClick={handleBulkDelete} disabled={!bulkDeleteYear || bulkDeleteDivisions.length === 0}
                                 className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
                                 Delete Class
                             </button>
