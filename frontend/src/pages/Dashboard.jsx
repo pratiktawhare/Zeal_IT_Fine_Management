@@ -54,7 +54,7 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="animate-fadeIn h-[calc(100vh-100px)] overflow-hidden flex flex-col">
+        <div className="animate-fadeIn min-h-[calc(100vh-100px)] overflow-y-auto flex flex-col pb-6">
             {/* Header */}
             <div className="mb-5">
                 <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
