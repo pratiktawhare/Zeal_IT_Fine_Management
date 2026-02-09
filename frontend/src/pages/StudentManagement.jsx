@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { studentManagementAPI, studentsAPI } from '../services/api';
+import { studentManagementAPI, studentsAPI, authAPI } from '../services/api';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
 import {
@@ -16,7 +16,8 @@ import {
     FiArrowUp,
     FiArrowDown,
     FiUpload,
-    FiUser
+    FiUser,
+    FiLock
 } from 'react-icons/fi';
 import { BiRupee } from 'react-icons/bi';
 
@@ -44,6 +45,13 @@ const StudentManagement = () => {
 
     const [bulkDeleteYear, setBulkDeleteYear] = useState('');
     const [bulkDeleteDivisions, setBulkDeleteDivisions] = useState([]);
+
+    // Password verification state
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordVerifying, setPasswordVerifying] = useState(false);
+    const [pendingDeleteAction, setPendingDeleteAction] = useState(null); // 'single' or 'bulk'
 
     const [filters, setFilters] = useState({
         year: '', division: '', search: '',
@@ -172,7 +180,41 @@ const StudentManagement = () => {
         }
     };
 
-    const handleDeleteStudent = async () => {
+    // Password verification handler
+    const handlePasswordVerify = async () => {
+        if (!deletePassword.trim()) {
+            setPasswordError('Please enter your password');
+            return;
+        }
+        try {
+            setPasswordVerifying(true);
+            setPasswordError('');
+            await authAPI.verifyPassword(deletePassword);
+            setShowPasswordModal(false);
+            setDeletePassword('');
+
+            // Execute the pending delete action
+            if (pendingDeleteAction === 'single') {
+                await executeDeleteStudent();
+            } else if (pendingDeleteAction === 'bulk') {
+                await executeBulkDelete();
+            }
+            setPendingDeleteAction(null);
+        } catch (err) {
+            setPasswordError(err.response?.data?.message || 'Incorrect password. Please try again.');
+        } finally {
+            setPasswordVerifying(false);
+        }
+    };
+
+    const handleDeleteStudent = () => {
+        setPendingDeleteAction('single');
+        setShowPasswordModal(true);
+        setDeletePassword('');
+        setPasswordError('');
+    };
+
+    const executeDeleteStudent = async () => {
         try {
             await studentManagementAPI.deleteStudent(selectedStudent.prn);
             setSuccess('Student deleted successfully');
@@ -183,24 +225,23 @@ const StudentManagement = () => {
         }
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDelete = () => {
+        if (!bulkDeleteYear || bulkDeleteDivisions.length === 0) {
+            setError('Please select Year and at least one Division');
+            return;
+        }
+        setPendingDeleteAction('bulk');
+        setShowPasswordModal(true);
+        setDeletePassword('');
+        setPasswordError('');
+    };
+
+    const executeBulkDelete = async () => {
         try {
-            if (!bulkDeleteYear || bulkDeleteDivisions.length === 0) {
-                setError('Please select Year and at least one Division');
-                return;
-            }
-
             const divisionsText = bulkDeleteDivisions.join(', ');
-            // Confirm again
-            if (!window.confirm(`Are you sure you want to delete ALL students in ${bulkDeleteYear} Division(s) ${divisionsText}?`)) {
-                return;
-            }
-
-            // Delete each division one by one
             for (const division of bulkDeleteDivisions) {
                 await studentManagementAPI.deleteByClass(bulkDeleteYear, division);
             }
-
             setSuccess(`Students from ${bulkDeleteYear} Div ${divisionsText} deleted successfully`);
             setShowBulkDeleteModal(false);
             setBulkDeleteYear('');
@@ -634,6 +675,57 @@ const StudentManagement = () => {
                             <button onClick={handleBulkDelete} disabled={!bulkDeleteYear || bulkDeleteDivisions.length === 0}
                                 className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
                                 Delete Class
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Password Verification Modal */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl w-full max-w-md p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-amber-100 rounded-full">
+                                <FiLock className="text-amber-600 text-xl" />
+                            </div>
+                            <h3 className="text-lg font-semibold">Password Required</h3>
+                        </div>
+                        <p className="text-gray-600 mb-4">
+                            {pendingDeleteAction === 'single'
+                                ? `Enter your password to delete student: ${selectedStudent?.name}`
+                                : `Enter your password to delete all students from ${bulkDeleteYear} Division(s) ${bulkDeleteDivisions.join(', ')}`
+                            }
+                        </p>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input
+                                type="password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handlePasswordVerify()}
+                                placeholder="Enter your password"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                autoFocus
+                            />
+                            {passwordError && (
+                                <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+                            )}
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setShowPasswordModal(false); setDeletePassword(''); setPasswordError(''); setPendingDeleteAction(null); }}
+                                className="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                disabled={passwordVerifying}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handlePasswordVerify}
+                                disabled={passwordVerifying || !deletePassword.trim()}
+                                className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {passwordVerifying ? 'Verifying...' : 'Confirm Delete'}
                             </button>
                         </div>
                     </div>
