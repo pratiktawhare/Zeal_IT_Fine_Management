@@ -19,13 +19,13 @@ import {
     FiSearch,
     FiX,
     FiFileText,
-    FiDollarSign,
     FiMinusCircle,
     FiTrash2,
     FiLock,
     FiCheckSquare,
     FiSquare
 } from 'react-icons/fi';
+import { FaRupeeSign } from 'react-icons/fa';
 
 const TransactionReport = () => {
     // Active section tab
@@ -253,9 +253,9 @@ const TransactionReport = () => {
     };
 
     const toggleSelectExpenditure = (id) => {
-        setSelectedDeleteIds(prev => 
-            prev.includes(id) 
-                ? prev.filter(x => x !== id) 
+        setSelectedDeleteIds(prev =>
+            prev.includes(id)
+                ? prev.filter(x => x !== id)
                 : [...prev, id]
         );
     };
@@ -682,8 +682,8 @@ const TransactionReport = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                     <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-lg ${(incomeSummary.totalIncome || 0) - (expenditureSummary.totalAmount || 0) >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
-                            {(incomeSummary.totalIncome || 0) - (expenditureSummary.totalAmount || 0) >= 0 
-                                ? <FiTrendingUp className="text-blue-600" /> 
+                            {(incomeSummary.totalIncome || 0) - (expenditureSummary.totalAmount || 0) >= 0
+                                ? <FiTrendingUp className="text-blue-600" />
                                 : <FiTrendingDown className="text-orange-600" />}
                         </div>
                         <div>
@@ -703,13 +703,12 @@ const TransactionReport = () => {
                 <div className="flex border-b border-gray-100">
                     <button
                         onClick={() => setActiveTab('income')}
-                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-medium transition-all ${
-                            activeTab === 'income'
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-medium transition-all ${activeTab === 'income'
                                 ? 'text-green-600 border-b-2 border-green-600 bg-green-50/50'
                                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
+                            }`}
                     >
-                        <FiDollarSign className="w-5 h-5" />
+                        <FaRupeeSign className="w-5 h-5" />
                         <span>Income</span>
                         <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">
                             {incomeTransactions.length}
@@ -717,11 +716,10 @@ const TransactionReport = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('expenditure')}
-                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-medium transition-all ${
-                            activeTab === 'expenditure'
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-medium transition-all ${activeTab === 'expenditure'
                                 ? 'text-red-600 border-b-2 border-red-600 bg-red-50/50'
                                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
+                            }`}
                     >
                         <FiMinusCircle className="w-5 h-5" />
                         <span>Expenditure</span>
@@ -1242,9 +1240,8 @@ const TransactionReport = () => {
                                     }}
                                     onKeyDown={(e) => e.key === 'Enter' && handlePasswordVerify()}
                                     placeholder="Enter your login password"
-                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                                        passwordError ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                    }`}
+                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${passwordError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                        }`}
                                     autoFocus
                                 />
                                 {passwordError && (
@@ -1253,7 +1250,7 @@ const TransactionReport = () => {
                             </div>
 
                             <p className="text-sm text-gray-500 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                <strong>Note:</strong> This verification ensures only authorized users can delete expenditure records. 
+                                <strong>Note:</strong> This verification ensures only authorized users can delete expenditure records.
                                 Deleted records cannot be recovered.
                             </p>
 
