@@ -7,14 +7,15 @@ import {
     FiCheck,
     FiX,
     FiDownload,
-    FiAlertCircle
+    FiAlertCircle,
+    FiLoader
 } from 'react-icons/fi';
 
 const UploadCSV = () => {
-    const [file, setFile] = useState(null);
+    const [files, setFiles] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadResult, setUploadResult] = useState(null);
+    const [uploadResults, setUploadResults] = useState([]);
     const [error, setError] = useState('');
     const fileInputRef = useRef(null);
 
@@ -31,69 +32,94 @@ const UploadCSV = () => {
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragging(false);
-        const droppedFile = e.dataTransfer.files[0];
-        validateAndSetFile(droppedFile);
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        validateAndAddFiles(droppedFiles);
     };
 
     const handleFileSelect = (e) => {
-        const selectedFile = e.target.files[0];
-        validateAndSetFile(selectedFile);
+        const selectedFiles = Array.from(e.target.files);
+        validateAndAddFiles(selectedFiles);
     };
 
-    const validateAndSetFile = (selectedFile) => {
+    const validateAndAddFiles = (selectedFiles) => {
         setError('');
-        setUploadResult(null);
+        setUploadResults([]);
 
-        if (!selectedFile) return;
+        const validFiles = [];
+        const invalidFiles = [];
 
-        // Check file type
-        if (!selectedFile.name.toLowerCase().endsWith('.csv')) {
-            setError('Please upload a CSV file only');
-            return;
+        selectedFiles.forEach(file => {
+            // Check file type
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                invalidFiles.push(`${file.name} (Not a CSV)`);
+                return;
+            }
+
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                invalidFiles.push(`${file.name} (Too large > 5MB)`);
+                return;
+            }
+
+            // check for duplicates
+            if (files.some(f => f.name === file.name && f.size === file.size)) {
+                invalidFiles.push(`${file.name} (Already selected)`);
+                return;
+            }
+
+            validFiles.push(file);
+        });
+
+        if (invalidFiles.length > 0) {
+            setError(`Skipped invalid files: ${invalidFiles.join(', ')}`);
         }
 
-        // Check file size (max 5MB)
-        if (selectedFile.size > 5 * 1024 * 1024) {
-            setError('File size should be less than 5MB');
-            return;
-        }
-
-        setFile(selectedFile);
+        setFiles(prev => [...prev, ...validFiles]);
     };
 
     const handleUpload = async () => {
-        if (!file) {
-            setError('Please select a file first');
+        if (files.length === 0) {
+            setError('Please select at least one file');
             return;
         }
 
         setIsUploading(true);
         setError('');
-        setUploadResult(null);
+        setUploadResults([]);
 
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
+        const results = [];
 
-            const response = await studentsAPI.uploadCSV(formData);
-            setUploadResult(response.data);
-            setFile(null);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
+        for (const file of files) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await studentsAPI.uploadCSV(formData);
+                results.push({
+                    fileName: file.name,
+                    success: true,
+                    data: response.data
+                });
+            } catch (err) {
+                results.push({
+                    fileName: file.name,
+                    success: false,
+                    error: err.response?.data?.message || err.message || 'Failed to upload'
+                });
             }
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to upload file. Please try again.');
-        } finally {
-            setIsUploading(false);
         }
-    };
 
-    const removeFile = () => {
-        setFile(null);
-        setError('');
+        setUploadResults(results);
+        setFiles([]); // Clear queue after processing
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+        setIsUploading(false);
+    };
+
+    const removeFile = (indexToRemove) => {
+        setFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+        setError('');
     };
 
     const formatFileSize = (bytes) => {
@@ -107,7 +133,7 @@ const UploadCSV = () => {
             {/* Header */}
             <div className="mb-4">
                 <h1 className="text-2xl font-bold text-gray-800">Upload Student Data</h1>
-                <p className="text-gray-600 text-sm">Import students from a CSV file</p>
+                <p className="text-gray-600 text-sm">Import students from CSV files</p>
             </div>
 
             {/* CSV Format Info */}
@@ -151,36 +177,47 @@ const UploadCSV = () => {
                 </div>
             )}
 
-            {/* Upload Result */}
-            {uploadResult && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
-                    <div className="flex items-start space-x-3">
-                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                            <FiCheck className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-green-800">Upload Successful!</h3>
-                            <p className="text-sm text-green-700 mt-1">
-                                {uploadResult.message || 'Students have been imported successfully.'}
-                            </p>
-                            {uploadResult.data && (
-                                <div className="mt-3 space-y-1 text-sm text-green-700">
-                                    {uploadResult.data.totalRecords !== undefined && (
-                                        <p>📊 Total records processed: <strong>{uploadResult.data.totalRecords}</strong></p>
-                                    )}
-                                    {uploadResult.data.newStudents !== undefined && (
-                                        <p>✓ New students added: <strong>{uploadResult.data.newStudents}</strong></p>
-                                    )}
-                                    {uploadResult.data.updatedStudents !== undefined && (
-                                        <p>✓ Students updated: <strong>{uploadResult.data.updatedStudents}</strong></p>
-                                    )}
-                                    {uploadResult.data.errors !== undefined && uploadResult.data.errors > 0 && (
-                                        <p className="text-amber-600">⚠ Errors: <strong>{uploadResult.data.errors}</strong></p>
+            {/* Upload Results */}
+            {uploadResults.length > 0 && (
+                <div className="space-y-3 mb-6">
+                    {uploadResults.map((result, index) => (
+                        <div key={index} className={`p-4 border rounded-xl ${result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                            }`}>
+                            <div className="flex items-start space-x-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${result.success ? 'bg-green-500' : 'bg-red-500'
+                                    }`}>
+                                    {result.success ? (
+                                        <FiCheck className="w-4 h-4 text-white" />
+                                    ) : (
+                                        <FiX className="w-4 h-4 text-white" />
                                     )}
                                 </div>
-                            )}
+                                <div className="flex-1">
+                                    <h3 className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+                                        {result.fileName}
+                                    </h3>
+                                    {result.success ? (
+                                        <div className="mt-1 text-sm text-green-700">
+                                            {result.data.data ? (
+                                                <div className="space-y-1">
+                                                    <p>✓ Processed: {result.data.data.totalRecords} records</p>
+                                                    <p>✓ Added: {result.data.data.newStudents} new students</p>
+                                                    <p>✓ Updated: {result.data.data.updatedStudents} distinct students</p>
+                                                    {result.data.data.errors > 0 && (
+                                                        <p className="text-amber-600">⚠ {result.data.data.errors} row errors</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p>{result.data.message}</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-red-700 mt-1">{result.error}</p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    ))}
                 </div>
             )}
 
@@ -202,6 +239,7 @@ const UploadCSV = () => {
                     onChange={handleFileSelect}
                     accept=".csv"
                     className="hidden"
+                    multiple
                 />
 
                 <div className="flex flex-col items-center">
@@ -210,47 +248,53 @@ const UploadCSV = () => {
                         <FiUpload className={`w-6 h-6 ${isDragging ? 'text-primary-600' : 'text-gray-400'}`} />
                     </div>
                     <p className="text-base font-medium text-gray-700 mb-1">
-                        {isDragging ? 'Drop your file here' : 'Drag & drop your CSV file'}
+                        {isDragging ? 'Drop your files here' : 'Drag & drop multiple CSV files'}
                     </p>
                     <p className="text-sm text-gray-500">
-                        or <span className="text-primary-600 font-medium">browse</span> to choose a file
+                        or <span className="text-primary-600 font-medium">browse</span> to choose files
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">Maximum file size: 5MB</p>
+                    <p className="text-xs text-gray-400 mt-1">Maximum file size: 5MB each</p>
                 </div>
             </div>
 
-            {/* Selected File */}
-            {file && (
-                <div className="mt-4 bg-white border border-gray-200 rounded-xl p-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                                <FiFile className="w-5 h-5 text-primary-600" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800">{file.name}</p>
-                                <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
+            {/* Selected Files List */}
+            {files.length > 0 && (
+                <div className="mt-4 space-y-2">
+                    {files.map((file, index) => (
+                        <div key={index} className="bg-white border border-gray-200 rounded-xl p-3 animate-fadeIn">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                        <FiFile className="w-5 h-5 text-primary-600" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-gray-800">{file.name}</p>
+                                        <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
+                                    </div>
+                                </div>
+                                {!isUploading && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeFile(index);
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <FiX className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
                         </div>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                removeFile();
-                            }}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                            <FiX className="w-5 h-5" />
-                        </button>
-                    </div>
+                    ))}
                 </div>
             )}
 
             {/* Upload Button */}
-            <div className="mt-4 flex justify-end">
+            <div className="mt-6 flex justify-end">
                 <button
                     onClick={handleUpload}
-                    disabled={!file || isUploading}
-                    className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary-700 
+                    disabled={files.length === 0 || isUploading}
+                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-700 
                      to-primary-800 text-white font-medium rounded-lg hover:from-primary-600 
                      hover:to-primary-700 disabled:opacity-50 disabled:cursor-not-allowed 
                      transition-all duration-200 shadow-lg shadow-primary-200"
@@ -258,12 +302,12 @@ const UploadCSV = () => {
                     {isUploading ? (
                         <>
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            <span>Uploading...</span>
+                            <span>Uploading {files.length} file{files.length !== 1 ? 's' : ''}...</span>
                         </>
                     ) : (
                         <>
                             <FiUpload className="w-5 h-5" />
-                            <span>Upload Students</span>
+                            <span>Upload {files.length > 0 ? `${files.length} Files` : 'Files'}</span>
                         </>
                     )}
                 </button>
