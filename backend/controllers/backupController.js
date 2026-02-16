@@ -8,6 +8,7 @@
  */
 
 const Student = require('../models/Student');
+const FeeLedger = require('../models/FeeLedger');
 const Expenditure = require('../models/Expenditure');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const ExcelJS = require('exceljs');
@@ -243,6 +244,382 @@ const generateStudentsPDF = (students) => {
         const footerY = doc.y > doc.page.height - 60 ? doc.page.height - 40 : doc.y + 10;
         doc.fontSize(7).font('Helvetica').fillColor('#718096')
             .text('Zeal Institute of Technology - ITSA Accounts', doc.page.margins.left, footerY);
+
+        doc.end();
+    });
+};
+
+// ============================================
+// Generate Expenditure Excel (Dedicated)
+// ============================================
+const generateExpenditureExcel = async (expenditures) => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'ITSA Accounts';
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet('Expenditure', {
+        properties: { defaultColWidth: 18 },
+    });
+
+    // Title rows
+    sheet.mergeCells('A1:H1');
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = 'INFORMATION TECHNOLOGY STUDENT ASSOCIATION (ITSA)';
+    titleCell.font = { bold: true, size: 14, color: { argb: 'FF1A365D' } };
+    titleCell.alignment = { horizontal: 'center' };
+
+    sheet.mergeCells('A2:H2');
+    const subtitleCell = sheet.getCell('A2');
+    subtitleCell.value = 'EXPENDITURE RECORDS BACKUP';
+    subtitleCell.font = { bold: true, size: 12, color: { argb: 'FFDC2626' } };
+    subtitleCell.alignment = { horizontal: 'center' };
+
+    sheet.mergeCells('A3:H3');
+    const dateCell = sheet.getCell('A3');
+    dateCell.value = `Generated on: ${new Date().toLocaleString('en-IN')}`;
+    dateCell.font = { italic: true, size: 10, color: { argb: 'FF718096' } };
+    dateCell.alignment = { horizontal: 'center' };
+
+    const totalExpenditure = expenditures.reduce((sum, e) => sum + (e.amount || 0), 0);
+    sheet.mergeCells('A4:H4');
+    const countCell = sheet.getCell('A4');
+    countCell.value = `Total Expenditure: ${formatCurrency(totalExpenditure)} | Total Entries: ${expenditures.length}`;
+    countCell.font = { bold: true, size: 11 };
+    countCell.alignment = { horizontal: 'center' };
+
+    // Empty row
+    sheet.addRow([]);
+
+    // Headers
+    const headers = ['Sr. No', 'Date', 'Receipt No', 'Category', 'Description', 'Sender', 'Receiver', 'Amount (₹)'];
+    const headerRow = sheet.addRow(headers);
+
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } };
+    const headerFont = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    const headerBorder = {
+        top: { style: 'thin' }, bottom: { style: 'thin' },
+        left: { style: 'thin' }, right: { style: 'thin' }
+    };
+
+    headerRow.eachCell((cell) => {
+        cell.fill = headerFill;
+        cell.font = headerFont;
+        cell.border = headerBorder;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // Data rows
+    const cellBorder = {
+        top: { style: 'thin' }, bottom: { style: 'thin' },
+        left: { style: 'thin' }, right: { style: 'thin' }
+    };
+
+    expenditures.forEach((e, index) => {
+        const row = sheet.addRow([
+            index + 1,
+            formatDate(e.date || e.createdAt),
+            e.receiptNumber || '-',
+            e.category || '-',
+            e.description || '-',
+            e.senderName || '-',
+            e.receiverName || '-',
+            e.amount || 0,
+        ]);
+
+        row.eachCell((cell) => {
+            cell.border = cellBorder;
+            cell.alignment = { vertical: 'middle' };
+        });
+
+        // Alternate row coloring
+        if (index % 2 === 0) {
+            row.eachCell((cell) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+            });
+        }
+    });
+
+    // Column widths
+    sheet.columns = [
+        { width: 8 }, { width: 18 }, { width: 15 }, { width: 20 }, { width: 35 },
+        { width: 20 }, { width: 20 }, { width: 15 },
+    ];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+};
+
+// ============================================
+// Generate Expenditure PDF (Dedicated)
+// ============================================
+const generateExpenditurePDF = (expenditures) => {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 30 });
+        const buffers = [];
+
+        doc.on('data', (chunk) => buffers.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(buffers)));
+        doc.on('error', reject);
+
+        const totalExpenditure = expenditures.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#1A365D')
+            .text('INFORMATION TECHNOLOGY STUDENT ASSOCIATION (ITSA)', { align: 'center' });
+        doc.fontSize(14).fillColor('#DC2626')
+            .text('EXPENDITURE RECORDS BACKUP', { align: 'center' });
+        doc.moveDown(0.3);
+        doc.fontSize(9).font('Helvetica').fillColor('#718096')
+            .text(`Generated: ${new Date().toLocaleString('en-IN')}  |  Total Expenditure: ${formatCurrency(totalExpenditure)}  |  Entries: ${expenditures.length}`, { align: 'center' });
+        doc.moveDown(0.8);
+
+        const colWidths = [30, 85, 70, 90, 130, 100, 100, 80];
+        const headers = ['Sr.', 'Date', 'Receipt', 'Category', 'Description', 'Sender', 'Receiver', 'Amount'];
+        const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+        let x = doc.page.margins.left;
+        let y = doc.y;
+        const headerHeight = 22;
+
+        doc.rect(x, y, pageWidth, headerHeight).fill('#DC2626');
+        headers.forEach((h, i) => {
+            doc.fontSize(8).font('Helvetica-Bold').fillColor('#FFFFFF')
+                .text(h, x + 3, y + 6, { width: colWidths[i] - 6, align: 'left' });
+            x += colWidths[i];
+        });
+        y += headerHeight;
+
+        expenditures.forEach((e, idx) => {
+            if (y + 18 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+                y = doc.page.margins.top;
+                x = doc.page.margins.left;
+                doc.rect(x, y, pageWidth, headerHeight).fill('#DC2626');
+                headers.forEach((h, i) => {
+                    doc.fontSize(8).font('Helvetica-Bold').fillColor('#FFFFFF')
+                        .text(h, x + 3, y + 6, { width: colWidths[i] - 6, align: 'left' });
+                    x += colWidths[i];
+                });
+                y += headerHeight;
+            }
+
+            const rowHeight = 16;
+            const bgColor = idx % 2 === 0 ? '#FEF2F2' : '#FFFFFF';
+            x = doc.page.margins.left;
+            doc.rect(x, y, pageWidth, rowHeight).fill(bgColor);
+
+            const rowData = [
+                (idx + 1).toString(),
+                formatDate(e.date || e.createdAt),
+                e.receiptNumber || '-',
+                e.category || '-',
+                (e.description || '-').substring(0, 40),
+                e.senderName || '-',
+                e.receiverName || '-',
+                formatCurrency(e.amount),
+            ];
+
+            rowData.forEach((cell, i) => {
+                doc.fontSize(7).font('Helvetica').fillColor('#374151')
+                    .text(cell, x + 3, y + 4, { width: colWidths[i] - 6, align: 'left', lineBreak: false });
+                x += colWidths[i];
+            });
+            y += rowHeight;
+        });
+
+        doc.moveDown(1);
+        const footerY = doc.y > doc.page.height - 40 ? doc.page.height - 40 : doc.y + 10;
+        doc.fontSize(7).font('Helvetica').fillColor('#718096')
+            .text('Zeal Institute of Technology - ITSA Accounts', doc.page.margins.left, footerY);
+
+        doc.end();
+    });
+};
+
+// ============================================
+// Generate Fee Ledger Excel
+// ============================================
+const generateFeeLedgerExcel = async (ledgers) => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'ITSA Accounts';
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet('Fee Ledger', {
+        properties: { defaultColWidth: 18 },
+    });
+
+    // Title rows
+    sheet.mergeCells('A1:J1');
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = 'INFORMATION TECHNOLOGY STUDENT ASSOCIATION (ITSA)';
+    titleCell.font = { bold: true, size: 14, color: { argb: 'FF1A365D' } };
+    titleCell.alignment = { horizontal: 'center' };
+
+    sheet.mergeCells('A2:J2');
+    const subtitleCell = sheet.getCell('A2');
+    subtitleCell.value = 'FEE LEDGER BACKUP';
+    subtitleCell.font = { bold: true, size: 12, color: { argb: 'FFD97706' } };
+    subtitleCell.alignment = { horizontal: 'center' };
+
+    sheet.mergeCells('A3:J3');
+    const dateCell = sheet.getCell('A3');
+    dateCell.value = `Generated on: ${new Date().toLocaleString('en-IN')}`;
+    dateCell.font = { italic: true, size: 10, color: { argb: 'FF718096' } };
+    dateCell.alignment = { horizontal: 'center' };
+
+    const totalCollected = ledgers.reduce((sum, l) => sum + (l.paidAmount || 0), 0);
+    const totalPending = ledgers.reduce((sum, l) => sum + (l.totalAmount - l.paidAmount), 0);
+
+    sheet.mergeCells('A4:J4');
+    const countCell = sheet.getCell('A4');
+    countCell.value = `Total Collected: ${formatCurrency(totalCollected)} | Total Pending: ${formatCurrency(totalPending)}`;
+    countCell.font = { bold: true, size: 11 };
+    countCell.alignment = { horizontal: 'center' };
+
+    sheet.addRow([]);
+
+    // Headers
+    const headers = ['Sr. No', 'PRN', 'Student Name', 'Class', 'Category', 'Total Amount', 'Paid Amount', 'Pending', 'Status', 'Last Payment'];
+    const headerRow = sheet.addRow(headers);
+
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD97706' } };
+    const headerFont = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+    const headerBorder = {
+        top: { style: 'thin' }, bottom: { style: 'thin' },
+        left: { style: 'thin' }, right: { style: 'thin' }
+    };
+
+    headerRow.eachCell((cell) => {
+        cell.fill = headerFill;
+        cell.font = headerFont;
+        cell.border = headerBorder;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // Data rows
+    const cellBorder = {
+        top: { style: 'thin' }, bottom: { style: 'thin' },
+        left: { style: 'thin' }, right: { style: 'thin' }
+    };
+
+    ledgers.forEach((l, index) => {
+        const lastPayment = l.payments && l.payments.length > 0 ? l.payments[l.payments.length - 1].date : null;
+        const pending = Math.max(0, l.totalAmount - l.paidAmount);
+
+        const row = sheet.addRow([
+            index + 1,
+            l.studentPRN || '-',
+            l.studentName || '-',
+            `${l.studentClass || ''} ${l.studentDivision || ''}`,
+            l.categoryName || '-',
+            l.totalAmount,
+            l.paidAmount,
+            pending,
+            l.status.toUpperCase(),
+            formatDate(lastPayment)
+        ]);
+
+        row.eachCell((cell) => {
+            cell.border = cellBorder;
+            cell.alignment = { vertical: 'middle' };
+        });
+
+        if (index % 2 === 0) {
+            row.eachCell((cell) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFBEB' } };
+            });
+        }
+    });
+
+    sheet.columns = [
+        { width: 8 }, { width: 15 }, { width: 25 }, { width: 12 }, { width: 20 },
+        { width: 15 }, { width: 15 }, { width: 15 }, { width: 12 }, { width: 18 },
+    ];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+};
+
+// ============================================
+// Generate Fee Ledger PDF
+// ============================================
+const generateFeeLedgerPDF = (ledgers) => {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 30 });
+        const buffers = [];
+
+        doc.on('data', (chunk) => buffers.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(buffers)));
+        doc.on('error', reject);
+
+        const totalCollected = ledgers.reduce((sum, l) => sum + (l.paidAmount || 0), 0);
+
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#1A365D')
+            .text('INFORMATION TECHNOLOGY STUDENT ASSOCIATION (ITSA)', { align: 'center' });
+        doc.fontSize(14).fillColor('#D97706')
+            .text('FEE LEDGER BACKUP', { align: 'center' });
+        doc.moveDown(0.3);
+        doc.fontSize(9).font('Helvetica').fillColor('#718096')
+            .text(`Generated: ${new Date().toLocaleString('en-IN')}  |  Collected: ${formatCurrency(totalCollected)}  |  Records: ${ledgers.length}`, { align: 'center' });
+        doc.moveDown(0.8);
+
+        const colWidths = [30, 80, 120, 50, 90, 70, 70, 70, 60, 80];
+        const headers = ['Sr.', 'PRN', 'Name', 'Class', 'Category', 'Total', 'Paid', 'Pending', 'Status', 'Last Pay'];
+        const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+        let x = doc.page.margins.left;
+        let y = doc.y;
+        const headerHeight = 22;
+
+        doc.rect(x, y, pageWidth, headerHeight).fill('#D97706');
+        headers.forEach((h, i) => {
+            doc.fontSize(8).font('Helvetica-Bold').fillColor('#FFFFFF')
+                .text(h, x + 3, y + 6, { width: colWidths[i] - 6, align: 'left' });
+            x += colWidths[i];
+        });
+        y += headerHeight;
+
+        ledgers.forEach((l, idx) => {
+            if (y + 18 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+                y = doc.page.margins.top;
+                x = doc.page.margins.left;
+                doc.rect(x, y, pageWidth, headerHeight).fill('#D97706');
+                headers.forEach((h, i) => {
+                    doc.fontSize(8).font('Helvetica-Bold').fillColor('#FFFFFF')
+                        .text(h, x + 3, y + 6, { width: colWidths[i] - 6, align: 'left' });
+                    x += colWidths[i];
+                });
+                y += headerHeight;
+            }
+
+            const rowHeight = 16;
+            const bgColor = idx % 2 === 0 ? '#FFFBEB' : '#FFFFFF';
+            x = doc.page.margins.left;
+            doc.rect(x, y, pageWidth, rowHeight).fill(bgColor);
+
+            const lastPayment = l.payments && l.payments.length > 0 ? l.payments[l.payments.length - 1].date : null;
+            const pending = Math.max(0, l.totalAmount - l.paidAmount);
+
+            const rowData = [
+                (idx + 1).toString(),
+                l.studentPRN || '-',
+                (l.studentName || '-').substring(0, 25),
+                `${l.studentClass || ''} ${l.studentDivision || ''}`,
+                l.categoryName || '-',
+                formatCurrency(l.totalAmount),
+                formatCurrency(l.paidAmount),
+                formatCurrency(pending),
+                l.status.toUpperCase(),
+                formatDate(lastPayment)
+            ];
+
+            rowData.forEach((cell, i) => {
+                doc.fontSize(7).font('Helvetica').fillColor('#374151')
+                    .text(cell, x + 3, y + 4, { width: colWidths[i] - 6, align: 'left', lineBreak: false });
+                x += colWidths[i];
+            });
+            y += rowHeight;
+        });
 
         doc.end();
     });
@@ -640,12 +1017,18 @@ const downloadLocalBackup = asyncHandler(async (req, res) => {
     const students = await Student.find({ isActive: true }).sort({ year: 1, division: 1, rollNo: 1 });
     const incomeTransactions = await fetchAllIncomeTransactions();
     const expenditures = await Expenditure.find().sort({ date: -1 }).populate('addedBy', 'name');
+    const ledgers = await FeeLedger.find({ isActive: true }).sort({ studentClass: 1, studentDivision: 1, studentRollNo: 1 });
 
     // Step 2: Generate files
     const studentsExcelBuffer = await generateStudentsExcel(students);
     const studentsPDFBuffer = await generateStudentsPDF(students);
     const transactionsExcelBuffer = await generateTransactionsExcel(incomeTransactions, expenditures);
     const transactionsPDFBuffer = await generateTransactionsPDF(incomeTransactions, expenditures);
+    const expenditureExcelBuffer = await generateExpenditureExcel(expenditures);
+    const expenditurePDFBuffer = await generateExpenditurePDF(expenditures);
+    const feeLedgerExcelBuffer = await generateFeeLedgerExcel(ledgers);
+    const feeLedgerPDFBuffer = await generateFeeLedgerPDF(ledgers);
+
 
     // Step 3: Create Zip
     const archive = archiver('zip', {
@@ -662,8 +1045,14 @@ const downloadLocalBackup = asyncHandler(async (req, res) => {
     // Append files
     archive.append(studentsExcelBuffer, { name: 'Students/Students_Record.xlsx' });
     archive.append(studentsPDFBuffer, { name: 'Students/Students_Record.pdf' });
-    archive.append(transactionsExcelBuffer, { name: 'Transactions/Transactions_Record.xlsx' });
-    archive.append(transactionsPDFBuffer, { name: 'Transactions/Transactions_Record.pdf' });
+    archive.append(transactionsExcelBuffer, { name: 'Transactions/Transactions_Unified_Record.xlsx' });
+    archive.append(transactionsPDFBuffer, { name: 'Transactions/Transactions_Unified_Record.pdf' });
+
+    // Append new files
+    archive.append(expenditureExcelBuffer, { name: 'Expenditure/Expenditure_Record.xlsx' });
+    archive.append(expenditurePDFBuffer, { name: 'Expenditure/Expenditure_Record.pdf' });
+    archive.append(feeLedgerExcelBuffer, { name: 'FeeLedgers/Fee_Ledger_Record.xlsx' });
+    archive.append(feeLedgerPDFBuffer, { name: 'FeeLedgers/Fee_Ledger_Record.pdf' });
 
     // Finalize the archive (ie we are done appending files but streams have to finish yet)
     await archive.finalize();
