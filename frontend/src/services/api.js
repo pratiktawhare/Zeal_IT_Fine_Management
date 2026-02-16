@@ -139,6 +139,16 @@ export const studentManagementAPI = {
     deleteByClass: (year, division) => api.delete('/students/class', { data: { year, division } }),
 };
 
+// ============================================
+// Backup API
+// ============================================
+
+export const backupAPI = {
+    downloadLocalBackup: (data) => api.post('/backup/download', data, {
+        responseType: 'blob',
+    }),
+};
+
 export default api;
 
 

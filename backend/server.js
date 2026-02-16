@@ -65,6 +65,9 @@ app.use('/api/reports', require('./routes/reportRoutes'));
 // Fee Ledger routes
 app.use('/api/fee-ledger', require('./routes/feeLedgerRoutes'));
 
+// Backup routes (Google Drive)
+app.use('/api/backup', require('./routes/backupRoutes'));
+
 // ===========================================
 // Error Handling Middleware
 // ===========================================

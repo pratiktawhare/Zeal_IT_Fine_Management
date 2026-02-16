@@ -27,6 +27,8 @@ import FirstTimeSetup from './pages/FirstTimeSetup';
 import ForgotPassword from './pages/ForgotPassword';
 import SystemAdmin from './pages/SystemAdmin';
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 // Layout wrapper for authenticated pages
 const AuthenticatedLayout = ({ children }) => {
     return (
@@ -51,167 +53,169 @@ function App() {
     }
 
     return (
-        <Routes>
-            {/* First-Time Setup Route */}
-            <Route
-                path="/setup"
-                element={
-                    setupRequired ? <FirstTimeSetup /> : <Navigate to="/login" replace />
-                }
-            />
+        <ErrorBoundary>
+            <Routes>
+                {/* First-Time Setup Route */}
+                <Route
+                    path="/setup"
+                    element={
+                        setupRequired ? <FirstTimeSetup /> : <Navigate to="/login" replace />
+                    }
+                />
 
-            {/* Forgot Password Route */}
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+                {/* Forgot Password Route */}
+                <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            {/* Public Route - Redirect to setup if needed */}
-            <Route
-                path="/login"
-                element={
-                    setupRequired ? <Navigate to="/setup" replace /> : <LoginPage />
-                }
-            />
+                {/* Public Route - Redirect to setup if needed */}
+                <Route
+                    path="/login"
+                    element={
+                        setupRequired ? <Navigate to="/setup" replace /> : <LoginPage />
+                    }
+                />
 
-            {/* Protected Routes */}
-            <Route
-                path="/dashboard"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <Dashboard />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                {/* Protected Routes */}
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <Dashboard />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/upload"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <UploadCSV />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/upload"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <UploadCSV />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
 
 
-            <Route
-                path="/student/:prn"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <StudentDetails />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/student/:prn"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <StudentDetails />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/add-payment/:prn"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <AddPayment />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/add-payment/:prn"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <AddPayment />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/expenditure"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <AddExpenditure />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/expenditure"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <AddExpenditure />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/categories"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <ManageCategories />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/categories"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <ManageCategories />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/about"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <About />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/about"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <About />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            {/* Admin Routes */}
-            <Route
-                path="/admin/students"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <StudentManagement />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                {/* Admin Routes */}
+                <Route
+                    path="/admin/students"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <StudentManagement />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/admin/transactions"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <TransactionReport />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/admin/transactions"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <TransactionReport />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/admin/settings"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <SystemAdmin />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/admin/settings"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <SystemAdmin />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            <Route
-                path="/admin/fees-ledger"
-                element={
-                    <ProtectedRoute>
-                        <AuthenticatedLayout>
-                            <StudentFeesLedger />
-                        </AuthenticatedLayout>
-                    </ProtectedRoute>
-                }
-            />
+                <Route
+                    path="/admin/fees-ledger"
+                    element={
+                        <ProtectedRoute>
+                            <AuthenticatedLayout>
+                                <StudentFeesLedger />
+                            </AuthenticatedLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-            {/* Default redirect */}
-            <Route
-                path="/"
-                element={
-                    setupRequired ? <Navigate to="/setup" replace /> : <Navigate to="/dashboard" replace />
-                }
-            />
+                {/* Default redirect */}
+                <Route
+                    path="/"
+                    element={
+                        setupRequired ? <Navigate to="/setup" replace /> : <Navigate to="/dashboard" replace />
+                    }
+                />
 
-            {/* 404 - Redirect to dashboard or setup */}
-            <Route
-                path="*"
-                element={
-                    setupRequired ? <Navigate to="/setup" replace /> : <Navigate to="/dashboard" replace />
-                }
-            />
-        </Routes>
+                {/* 404 - Redirect to dashboard or setup */}
+                <Route
+                    path="*"
+                    element={
+                        setupRequired ? <Navigate to="/setup" replace /> : <Navigate to="/dashboard" replace />
+                    }
+                />
+            </Routes>
+        </ErrorBoundary>
     );
 }
 

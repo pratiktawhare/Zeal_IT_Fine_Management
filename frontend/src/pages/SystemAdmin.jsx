@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { authAPI } from '../services/api';
+import { authAPI, backupAPI } from '../services/api';
 import {
     FiUser,
     FiMail,
@@ -16,7 +16,15 @@ import {
     FiTrash2,
     FiAlertTriangle,
     FiDatabase,
-    FiX
+    FiX,
+    FiUploadCloud,
+    FiFolder,
+    FiCalendar,
+    FiExternalLink,
+    FiFileText,
+    FiFile,
+    FiDownload,
+    FiArrowRight
 } from 'react-icons/fi';
 
 const SystemAdmin = () => {
@@ -45,13 +53,30 @@ const SystemAdmin = () => {
 
     // Database reset state
     const [showResetModal, setShowResetModal] = useState(false);
-    const [resetStep, setResetStep] = useState(1); // 1: warning, 2: password, 3: confirmation
+    const [resetStep, setResetStep] = useState(0);
+    // Step 0: Warning/Download Recommendation
+    // Step 1: Academic Year Input
+    // Step 2: Warning
+    // Step 3: Password Verification
+    // Step 4: Confirmation Phrase
+    // Step 5: Success
     const [resetPassword, setResetPassword] = useState('');
-    const [showResetPassword, setShowResetPassword] = useState(false);
     const [confirmationPhrase, setConfirmationPhrase] = useState('');
     const [isResetting, setIsResetting] = useState(false);
     const [resetError, setResetError] = useState('');
     const [resetSuccess, setResetSuccess] = useState(null);
+    const [showResetPassword, setShowResetPassword] = useState(false);
+
+    // Backup state (Local only now)
+
+
+    // Download state
+    const [showDownloadModal, setShowDownloadModal] = useState(false);
+    const [downloadTitle, setDownloadTitle] = useState('');
+    const [downloadYear, setDownloadYear] = useState('');
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadError, setDownloadError] = useState('');
+    const [downloadSuccess, setDownloadSuccess] = useState('');
 
     useEffect(() => {
         if (!isAuthenticated()) {
@@ -141,17 +166,20 @@ const SystemAdmin = () => {
 
     // Database reset handlers
     const openResetModal = () => {
+        // Start with Step 0: Pre-check
         setShowResetModal(true);
-        setResetStep(1);
+        setResetStep(0); // 0 = Warning/Download Recommendation
         setResetPassword('');
         setConfirmationPhrase('');
         setResetError('');
         setResetSuccess(null);
+        setShowResetPassword(false);
     };
 
     const closeResetModal = () => {
+        if (isResetting) return; // Don't close during operations
         setShowResetModal(false);
-        setResetStep(1);
+        setResetStep(0);
         setResetPassword('');
         setConfirmationPhrase('');
         setResetError('');
@@ -159,28 +187,25 @@ const SystemAdmin = () => {
     };
 
     const handleDatabaseReset = async () => {
-        if (resetStep === 1) {
-            // Move to password verification step
-            setResetStep(2);
-            setResetError('');
+        // Step 0: Pre-reset check -> Go to Password (Step 1)
+        if (resetStep === 0) {
+            setResetStep(1);
             return;
         }
 
-        if (resetStep === 2) {
-            // Verify password is entered
+        // Step 1: Password verification
+        if (resetStep === 1) {
             if (!resetPassword) {
                 setResetError('Please enter your password');
                 return;
             }
 
-            // Verify password with server
             setIsResetting(true);
             setResetError('');
 
             try {
                 await authAPI.verifyPassword(resetPassword);
-                // Password verified, move to confirmation phrase step
-                setResetStep(3);
+                setResetStep(2);
             } catch (err) {
                 setResetError(err.response?.data?.message || 'Password verification failed');
             } finally {
@@ -189,24 +214,24 @@ const SystemAdmin = () => {
             return;
         }
 
-        if (resetStep === 3) {
-            // Verify confirmation phrase
+        // Step 2: Confirmation phrase + execute
+        if (resetStep === 2) {
             if (confirmationPhrase !== 'DELETE EVERYTHING') {
                 setResetError('Please type "DELETE EVERYTHING" exactly as shown');
                 return;
             }
 
-            setIsResetting(true);
             setResetError('');
+            setIsResetting(true);
 
             try {
                 const response = await authAPI.resetDatabase({
                     password: resetPassword,
-                    confirmationPhrase: confirmationPhrase
+                    confirmationPhrase: confirmationPhrase,
                 });
 
                 setResetSuccess(response.data.data);
-                setResetStep(4); // Success step
+                setResetStep(3);
             } catch (err) {
                 setResetError(err.response?.data?.message || 'Failed to reset database');
             } finally {
@@ -214,6 +239,91 @@ const SystemAdmin = () => {
             }
         }
     };
+
+
+
+    // Download handlers
+    const openDownloadModal = () => {
+        setShowDownloadModal(true);
+        setDownloadTitle('');
+        setDownloadYear('');
+        setDownloadError('');
+        setDownloadSuccess('');
+    };
+
+    const closeDownloadModal = () => {
+        if (isDownloading) return;
+        setShowDownloadModal(false);
+        setDownloadTitle('');
+        setDownloadYear('');
+        setDownloadError('');
+    };
+
+    const handleDownload = async (e) => {
+        e.preventDefault();
+        setDownloadError('');
+        setDownloadSuccess('');
+
+        if (!downloadTitle.trim()) {
+            setDownloadError('Please enter a title');
+            return;
+        }
+        if (!downloadYear.trim()) {
+            setDownloadError('Please enter the academic year');
+            return;
+        }
+
+        setIsDownloading(true);
+
+        try {
+            const response = await backupAPI.downloadLocalBackup({
+                title: downloadTitle.trim(),
+                academicYear: downloadYear.trim()
+            });
+
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+
+            // Clean filename
+            const filename = `${downloadTitle.replace(/[^a-z0-9]/gi, '_')}_${downloadYear.replace(/[^a-z0-9]/gi, '_')}.zip`;
+            link.setAttribute('download', filename);
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setDownloadSuccess('Download started successfully!');
+            setTimeout(() => {
+                closeDownloadModal();
+            }, 2000);
+        } catch (err) {
+            console.error(err);
+            setDownloadError('Failed to download backup. Please try again.');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    // Navigate from Reset to Download
+    const navigateToDownload = () => {
+        closeResetModal();
+        openDownloadModal();
+    };
+
+    // Get step header info
+    const getStepHeader = () => {
+        switch (resetStep) {
+            case 0: return { icon: <FiDownload className="w-5 h-5" />, title: 'Backup Recommendation', color: 'bg-indigo-600' };
+            case 1: return { icon: <FiLock className="w-5 h-5" />, title: 'Verify Your Identity', color: 'bg-red-600' };
+            case 2: return { icon: <FiAlertTriangle className="w-5 h-5" />, title: 'Final Confirmation', color: 'bg-red-700' };
+            case 3: return { icon: <FiCheck className="w-5 h-5" />, title: 'Operation Complete', color: 'bg-green-600' };
+            default: return { icon: <FiDatabase className="w-5 h-5" />, title: 'Reset Database', color: 'bg-red-600' };
+        }
+    };
+
+    const stepHeader = getStepHeader();
 
     return (
         <div className="animate-fadeIn">
@@ -449,6 +559,38 @@ const SystemAdmin = () => {
                 </div>
             </div>
 
+            {/* Data Export Section */}
+            <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                    <FiDatabase className="w-5 h-5 text-indigo-600" />
+                    <span>Data Management</span>
+                </h2>
+
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                            <h3 className="font-medium text-indigo-800 flex items-center space-x-2">
+                                <FiDownload className="w-4 h-4" />
+                                <span>Bulk Download Data</span>
+                            </h3>
+                            <p className="text-sm text-indigo-600 mt-1">
+                                Download a complete zip archive containing PDF and Excel files for all
+                                student records, transactions, and ledgers. Organized by folders.
+                            </p>
+                        </div>
+                        <button
+                            onClick={openDownloadModal}
+                            className="ml-4 flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white 
+                                   font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 
+                                   focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                        >
+                            <FiDownload className="w-4 h-4" />
+                            <span>Download Bulk</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {/* Danger Zone */}
             <div className="mt-8 bg-white rounded-xl shadow-sm border-2 border-red-200 p-6">
                 <h2 className="text-lg font-semibold text-red-700 mb-4 flex items-center space-x-2">
@@ -465,8 +607,8 @@ const SystemAdmin = () => {
                             </h3>
                             <p className="text-sm text-red-600 mt-1">
                                 This will permanently delete <strong>all students, transactions, expenditures,
-                                    fee ledger entries, and payment categories</strong>. This action cannot be undone.
-                                Use this to start fresh for a new academic year.
+                                    fee ledger entries, and payment categories</strong>. Please ensure you have
+                                downloaded a local backup before proceeding.
                             </p>
                         </div>
                         <button
@@ -485,29 +627,34 @@ const SystemAdmin = () => {
             {/* Reset Database Modal */}
             {showResetModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-fadeIn">
                         {/* Modal Header */}
-                        <div className={`px-6 py-4 flex items-center justify-between ${resetStep === 4 ? 'bg-green-600' : 'bg-red-600'
-                            }`}>
+                        <div className={`px-6 py-4 flex items-center justify-between ${stepHeader.color}`}>
                             <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
-                                {resetStep === 4 ? (
-                                    <>
-                                        <FiCheck className="w-5 h-5" />
-                                        <span>Database Reset Complete</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <FiAlertTriangle className="w-5 h-5" />
-                                        <span>Reset Database</span>
-                                    </>
-                                )}
+                                {stepHeader.icon}
+                                <span>{stepHeader.title}</span>
                             </h3>
-                            <button
-                                onClick={closeResetModal}
-                                className="text-white/80 hover:text-white transition-colors"
-                            >
-                                <FiX className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center space-x-3">
+                                {/* Step indicator */}
+                                {resetStep > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                        {[1, 2, 3].map((s) => (
+                                            <div
+                                                key={s}
+                                                className={`w-2 h-2 rounded-full transition-all ${resetStep >= s ? 'bg-white' : 'bg-white/30'
+                                                    }`}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                                <button
+                                    onClick={closeResetModal}
+                                    disabled={isResetting}
+                                    className="text-white/80 hover:text-white transition-colors disabled:opacity-50"
+                                >
+                                    <FiX className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Modal Content */}
@@ -519,48 +666,49 @@ const SystemAdmin = () => {
                                 </div>
                             )}
 
-                            {/* Step 1: Warning */}
-                            {resetStep === 1 && (
-                                <div className="space-y-4">
-                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                            {/* Step 0: Pre-check */}
+                            {resetStep === 0 && (
+                                <div className="space-y-6">
+                                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-5">
                                         <div className="flex items-start space-x-3">
-                                            <FiAlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                                            <div className="bg-indigo-100 p-2 rounded-full">
+                                                <FiDownload className="w-6 h-6 text-indigo-600" />
+                                            </div>
                                             <div>
-                                                <p className="font-medium text-amber-800">Warning: Irreversible Action</p>
-                                                <p className="text-sm text-amber-700 mt-1">
-                                                    You are about to delete ALL data from the database. This includes:
+                                                <h4 className="font-bold text-indigo-900 text-lg">Download Bulk Data?</h4>
+                                                <p className="text-indigo-700 mt-1">
+                                                    Before you reset the database, we strongly recommend downloading a
+                                                    local copy of all data (Transactions, Ledgers, Students).
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <ul className="space-y-2 text-sm text-gray-600">
-                                        <li className="flex items-center space-x-2">
-                                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                                            <span>All student records and their fine history</span>
-                                        </li>
-                                        <li className="flex items-center space-x-2">
-                                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                                            <span>All expenditure records</span>
-                                        </li>
-                                        <li className="flex items-center space-x-2">
-                                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                                            <span>All fee ledger entries and payments</span>
-                                        </li>
-                                        <li className="flex items-center space-x-2">
-                                            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                                            <span>All payment categories</span>
-                                        </li>
-                                    </ul>
+                                    <div className="flex flex-col space-y-3">
+                                        <button
+                                            onClick={navigateToDownload}
+                                            className="w-full flex items-center justify-center space-x-2 py-4 px-4 
+                                                   bg-indigo-600 text-white font-bold rounded-xl
+                                                   hover:bg-indigo-700 focus:outline-none focus:ring-2 
+                                                   focus:ring-offset-2 focus:ring-indigo-500 transition-all shadow-lg shadow-indigo-200"
+                                        >
+                                            <FiDownload className="w-5 h-5" />
+                                            <span>Yes, Download Bulk Data First</span>
+                                        </button>
 
-                                    <p className="text-sm text-gray-500 italic">
-                                        Your admin account will be preserved.
-                                    </p>
+                                        <button
+                                            onClick={() => setResetStep(1)}
+                                            className="w-full py-3 px-4 text-gray-500 font-medium rounded-lg 
+                                                   hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                                        >
+                                            No, I have already downloaded it
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
-                            {/* Step 2: Password Verification */}
-                            {resetStep === 2 && (
+                            {/* Step 1: Password Verification (Was Step 3) */}
+                            {resetStep === 1 && (
                                 <div className="space-y-4">
                                     <p className="text-gray-600">
                                         Enter your admin password to continue:
@@ -588,8 +736,8 @@ const SystemAdmin = () => {
                                 </div>
                             )}
 
-                            {/* Step 3: Confirmation Phrase */}
-                            {resetStep === 3 && (
+                            {/* Step 2: Confirmation Phrase (Was Step 4) */}
+                            {resetStep === 2 && (
                                 <div className="space-y-4">
                                     <p className="text-gray-600">
                                         To confirm, type <span className="font-mono font-bold text-red-600 bg-red-50 px-2 py-1 rounded">DELETE EVERYTHING</span> below:
@@ -611,49 +759,58 @@ const SystemAdmin = () => {
                                             Type exactly as shown: DELETE EVERYTHING
                                         </p>
                                     )}
+                                    {resetStep === 2 && (
+                                        <button
+                                            onClick={handleDatabaseReset}
+                                            disabled={confirmationPhrase !== 'DELETE EVERYTHING' || isResetting}
+                                            className="w-full flex items-center justify-center space-x-2 py-3 px-4 
+                                                   bg-red-600 text-white font-medium rounded-lg 
+                                                   hover:bg-red-700 focus:outline-none focus:ring-2 
+                                                   focus:ring-offset-2 focus:ring-red-500 
+                                                   disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-4"
+                                        >
+                                            {isResetting ? (
+                                                <>
+                                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    <span>Resetting...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FiTrash2 className="w-5 h-5" />
+                                                    <span>Permanently Reset Database</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
                             )}
 
-                            {/* Step 4: Success */}
-                            {resetStep === 4 && resetSuccess && (
-                                <div className="space-y-4">
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                        <div className="flex items-start space-x-3">
-                                            <FiCheck className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
-                                            <div>
-                                                <p className="font-medium text-green-800">Database Reset Successful</p>
-                                                <p className="text-sm text-green-700 mt-1">
-                                                    All data has been deleted. The system is ready for a fresh start.
-                                                </p>
-                                            </div>
-                                        </div>
+                            {/* Step 3: Success (Was Step 5) */}
+                            {resetStep === 3 && (
+                                <div className="text-center py-6 animate-fadeIn">
+                                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <FiCheck className="w-8 h-8 text-green-600" />
                                     </div>
-
-                                    <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Students deleted:</span>
-                                            <span className="font-medium text-gray-800">{resetSuccess.studentsDeleted}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Expenditures deleted:</span>
-                                            <span className="font-medium text-gray-800">{resetSuccess.expendituresDeleted}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Fee entries deleted:</span>
-                                            <span className="font-medium text-gray-800">{resetSuccess.feeLedgerDeleted}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Categories deleted:</span>
-                                            <span className="font-medium text-gray-800">{resetSuccess.categoriesDeleted}</span>
-                                        </div>
-                                    </div>
+                                    <h4 className="text-xl font-bold text-gray-800 mb-2">Database Reset Complete</h4>
+                                    <p className="text-gray-600 mb-6">
+                                        The system has been successfully reset.
+                                        All previous data has been cleared.
+                                    </p>
+                                    <button
+                                        onClick={closeResetModal}
+                                        className="w-full py-3 px-4 bg-green-600 text-white font-medium rounded-lg 
+                                               hover:bg-green-700 focus:outline-none focus:ring-2 
+                                               focus:ring-offset-2 focus:ring-green-500 transition-all"
+                                    >
+                                        Close
+                                    </button>
                                 </div>
                             )}
                         </div>
 
                         {/* Modal Footer */}
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
-                            {resetStep === 4 ? (
+                            {resetStep === 3 ? (
                                 <button
                                     onClick={() => {
                                         closeResetModal();
@@ -664,44 +821,133 @@ const SystemAdmin = () => {
                                 >
                                     Go to Dashboard
                                 </button>
+                            ) : resetStep === 2 ? (
+                                // No footer buttons for confirmation step, handled in content
+                                null
                             ) : (
                                 <>
                                     <button
                                         onClick={closeResetModal}
+                                        disabled={isResetting}
                                         className="px-4 py-2 text-gray-600 hover:text-gray-800 
-                                               bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                               bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors
+                                               disabled:opacity-50"
                                     >
                                         Cancel
                                     </button>
-                                    <button
-                                        onClick={handleDatabaseReset}
-                                        disabled={isResetting || (resetStep === 3 && confirmationPhrase !== 'DELETE EVERYTHING')}
-                                        className={`px-6 py-2 font-medium rounded-lg transition-all flex items-center space-x-2
-                                               disabled:opacity-50 disabled:cursor-not-allowed ${resetStep === 1
-                                                ? 'bg-amber-600 text-white hover:bg-amber-700'
-                                                : 'bg-red-600 text-white hover:bg-red-700'
-                                            }`}
-                                    >
-                                        {isResetting ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                                <span>{resetStep === 2 ? 'Verifying...' : 'Resetting...'}</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                {resetStep === 1 && <span>I Understand, Continue</span>}
-                                                {resetStep === 2 && <span>Verify Password</span>}
-                                                {resetStep === 3 && (
-                                                    <>
-                                                        <FiTrash2 className="w-4 h-4" />
-                                                        <span>Delete Everything</span>
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                    </button>
+                                    {resetStep !== 0 && (
+                                        <button
+                                            onClick={handleDatabaseReset}
+                                            disabled={isResetting}
+                                            className={`px-6 py-2 font-medium rounded-lg transition-all flex items-center space-x-2
+                                                   disabled:opacity-50 disabled:cursor-not-allowed ${resetStep === 1
+                                                    ? 'bg-red-600 text-white hover:bg-red-700'
+                                                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                                                }`}
+                                        >
+                                            {isResetting ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    <span>Verifying...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {resetStep === 1 && <span>Verify Password</span>}
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
                                 </>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Bulk Download Modal */}
+            {showDownloadModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fadeIn">
+                        <div className="px-6 py-4 bg-indigo-600 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
+                                <FiDownload className="w-5 h-5" />
+                                <span>Bulk Download</span>
+                            </h3>
+                            <button
+                                onClick={closeDownloadModal}
+                                disabled={isDownloading}
+                                className="text-white/80 hover:text-white transition-colors"
+                            >
+                                <FiX className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            {downloadError && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                                    <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                    <p className="text-sm text-red-700">{downloadError}</p>
+                                </div>
+                            )}
+
+                            {downloadSuccess && (
+                                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-2">
+                                    <FiCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <p className="text-sm text-green-700">{downloadSuccess}</p>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleDownload} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        File Title <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={downloadTitle}
+                                        onChange={(e) => setDownloadTitle(e.target.value)}
+                                        placeholder="e.g., ITSA_Final_Backup"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                                               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Academic Year <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={downloadYear}
+                                        onChange={(e) => setDownloadYear(e.target.value)}
+                                        placeholder="e.g., 2025-26"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                                               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isDownloading}
+                                    className="w-full flex items-center justify-center space-x-2 py-3 px-4 
+                                           bg-indigo-600 text-white font-medium rounded-lg 
+                                           hover:bg-indigo-700 focus:outline-none focus:ring-2 
+                                           focus:ring-offset-2 focus:ring-indigo-500 
+                                           disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-4"
+                                >
+                                    {isDownloading ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <span>Generating Zip...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FiDownload className="w-5 h-5" />
+                                            <span>Download Zip</span>
+                                        </>
+                                    )}
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -711,4 +957,3 @@ const SystemAdmin = () => {
 };
 
 export default SystemAdmin;
-
